@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Глава 1: Философия Perl</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Глава 1: Философия Perl</h1>
+        <div class="content">
+            <div class="chapter-content">
+                <h2>Философия Perl</h2>
+                <p>Perl справляется с задачами: это гибкий, прощающий и пластичный язык. Умелые программисты используют его ежедневно — от однострочных автоматизаций до проектов, длящихся годы и вовлекающих множество разработчиков.</p>
+                
+                <p>Perl прагматичен. Ты сам решаешь, как решать свои задачи, а Perl подстраивается под твои намерения без лишних сложностей и церемоний.</p>
+
+                <p>Perl будет расти вместе с тобой. Уже через час ты сможешь писать реальные полезные программы — и поймёшь, как работает язык и почему он работает именно так. Modern Perl использует это знание и опыт глобального сообщества для того, чтобы помогать писать работоспособный и сопровождаемый код.</p>
+
+                <h3>Perldoc</h3>
+                <p>Perl уважает твоё время; культура Perl ценит документацию. Perl поставляется с тысячами страниц встроенной документации. Утилита <code>perldoc</code> входит в каждую полноценную установку Perl.</p>
+
+                <p>Примеры использования:</p>
+                <pre><code class="language-perl">$ perldoc List::Util
+$ perldoc perltoc
+$ perldoc Moose::Manual</code></pre>
+
+                <p>Документация также доступна онлайн:
+                    <ul>
+                        <li><a href="http://perldoc.perl.org/">perldoc.perl.org</a> — документация Perl</li>
+                        <li><a href="http://search.cpan.org/">search.cpan.org</a> и <a href="http://metacpan.org/">metacpan.org</a> — документация по модулям CPAN</li>
+                    </ul>
+                </p>
+
+                <h3>Как читать документацию</h3>
+                <p><code>perldoc perltoc</code> — оглавление документации Perl.</p>
+                <p><code>perldoc perlfaq</code> — часто задаваемые вопросы.</p>
+                <p><code>perldoc perlop</code> — операторы Perl.</p>
+                <p><code>perldoc perlsyn</code> — синтаксис Perl.</p>
+                <p><code>perldoc perldiag</code> — описание сообщений об ошибках.</p>
+                <p><code>perldoc perlvar</code> — список специальных переменных.</p>
+
+                <p>Ищи ответы с помощью <code>perldoc -q ключевое_слово</code> или читай о функциях через <code>perldoc -f функция</code>.</p>
+
+                <h3>Выразительность</h3>
+                <p>Perl разработан так, чтобы напоминать человеческий язык. Это даёт свободу писать код как просто, так и с использованием сложных конструкций. Perl поддерживает разные стили и позволяет выбирать наиболее подходящий под задачу подход.</p>
+
+                <p>Например, троекратное умножение списка можно написать по-разному:</p>
+                <pre><code class="language-perl">my @tripled;
+for (my $i = 0; $i &lt; scalar @numbers; $i++) {
+    $tripled[$i] = $numbers[$i] * 3;
+}</code></pre>
+
+                <pre><code class="language-perl">my @tripled;
+for my $num (@numbers) {
+    push @tripled, $num * 3;
+}</code></pre>
+
+                <pre><code class="language-perl">my @tripled = map { $_ * 3 } @numbers;</code></pre>
+
+                <h3>Контекст</h3>
+                <p>Perl меняет поведение выражений в зависимости от контекста — скалярного, списка или отсутствия ожидания результата (void).</p>
+
+                <p>Примеры:</p>
+                <pre><code class="language-perl">find_chores();            # void-контекст
+my $one = find_chores();   # скалярный контекст
+my @all = find_chores();   # контекст списка</code></pre>
+
+                <p>Чтобы явно задать скалярный контекст:</p>
+                <pre><code class="language-perl">my %results = (
+    cheap_operation     => $cheap_results,
+    expensive_operation => scalar find_chores(),
+);</code></pre>
+
+                <h3>Типы контекста</h3>
+                <p>Переменные и выражения могут интерпретироваться как числа, строки или логические значения в зависимости от операторов:</p>
+
+                <pre><code class="language-perl">say "Ошибка!" if $alice eq $bob;  # строковый контекст
+say "Ошибка!" if $alice == $bob;  # числовой контекст</code></pre>
+
+                <p>Для принудительного приведения:</p>
+                <pre><code class="language-perl">my $num = 0 + $x;   # принудительно числовой контекст
+my $str = '' . $x;  # принудительно строковый контекст
+my $bool = !!$x;    # принудительно логический контекст</code></pre>
+
+                <h3>Неявные переменные</h3>
+                <p>Переменная <code>$_</code> — "оно" в Perl. Многие встроенные функции работают с <code>$_</code> по умолчанию:</p>
+
+                <pre><code class="language-perl">chomp;
+say;
+print;</code></pre>
+
+                <p>Также используется в регулярных выражениях и циклах:</p>
+
+                <pre><code class="language-perl">while (&lt;STDIN&gt;) {
+    chomp;
+    say scalar reverse;
+}</code></pre>
+
+                <h3>Оператор "..."</h3>
+                <p>Троеточие <code>...</code> — заглушка для кода. Perl распознает его как корректный синтаксис, но выбросит ошибку при выполнении.</p>
+
+                <h3>Стандартные массивы</h3>
+                <p><code>@_</code> — массив аргументов внутри функции. <code>@ARGV</code> — аргументы командной строки вне функций.</p>
+
+                <pre><code class="language-perl">sub foo {
+    my $arg = shift;
+}</code></pre>
+
+                <h3>Чтение ввода</h3>
+                <p><code>&lt;&gt;</code> — короткая запись для чтения файлов из <code>@ARGV</code> или стандартного ввода:</p>
+
+                <pre><code class="language-perl">while (&lt;&gt;) {
+    chomp;
+    say scalar reverse;
+}</code></pre>
+
+            </div>
+        </div>
+        <div class="navigation">
+            <a href="../index.html">← К оглавлению</a>
+            <a href="chapter2.html">Следующая глава →</a>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-perl.min.js"></script>
+</body>
+</html>

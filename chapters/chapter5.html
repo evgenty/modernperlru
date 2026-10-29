@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Глава 5: Функции</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Глава 5: Функции</h1>
+        <div class="content">
+            <h2>Функции</h2>
+            <p>Функция (или подпрограмма) в Perl — это отдельная, инкапсулированная единица поведения. Программа состоит из таких "чёрных ящиков", где взаимодействие функций управляет потоком выполнения. Функция может иметь имя, принимать входные данные и возвращать результат.</p>
+
+            <h3>Объявление функций</h3>
+            <p>Для объявления используйте встроенное слово <code>sub</code>:</p>
+            <pre><code class="language-perl">sub greet_me { ... }</code></pre>
+            <p>Можно также объявить функцию заранее (forward declaration):</p>
+            <pre><code class="language-perl">sub greet_sun;</code></pre>
+
+            <h3>Вызов функций</h3>
+            <p>Вызов функции осуществляется с использованием скобок:</p>
+            <pre><code class="language-perl">greet_me( 'Jack', 'Tuxie', 'Brad' );
+greet_me( 'Snowy' );
+greet_me();</code></pre>
+            <p>Скобки не обязательны, но их лучше использовать для ясности.</p>
+            <p>Аргументы могут быть выражениями:</p>
+            <pre><code class="language-perl">greet_me( $name );
+greet_me( @authors );
+greet_me( %editors );
+greet_me( get_readers() );</code></pre>
+
+            <h3>Параметры функций</h3>
+            <p>Все параметры передаются через массив <code>@_</code>:</p>
+            <pre><code class="language-perl">sub greet_one {
+    my ($name) = @_;
+    say "Hello, $name!";
+}
+
+sub greet_all {
+    say "Hello, $_!" for @_;
+}</code></pre>
+
+            <p>Можно использовать <code>shift</code> или доступ по индексу:</p>
+            <pre><code class="language-perl">sub greet_one_shift {
+    my $name = shift;
+    say "Hello, $name!";
+}
+
+sub greet_two_list_assignment {
+    my ($hero, $sidekick) = @_;
+    say "Well if it isn't $hero and $sidekick. Welcome!";
+}
+
+sub greet_one_indexed {
+    my $name = $_[0];
+    say "Hello, $name!";
+}</code></pre>
+
+            <p>Ошибочный пример с использованием <code>@_</code> в скалярном контексте:</p>
+            <pre><code class="language-perl">sub bad_greet_one {
+    my $name = @_; # ошибка
+    say "Hello, $name; you look numeric today!";
+}</code></pre>
+
+            <p>Рекомендуемый способ:</p>
+            <pre><code class="language-perl">my ($left_value, $operation, $right_value) = @_;</code></pre>
+
+            <p>Пример делегирования параметров:</p>
+            <pre><code class="language-perl">sub delegated_method {
+    my $self = shift;
+    say 'Calling delegated_method()';
+    $self-&gt;delegate-&gt;delegated_method( @_ );
+}</code></pre>
+
+            <h3>Реальные сигнатуры функций</h3>
+            <p>Начиная с Perl 5.20, доступны экспериментальные сигнатуры функций (требуется:</p>
+            <pre><code class="language-perl">use experimental 'signatures';</code></pre>
+
+            <p>Пример с одной переменной:</p>
+            <pre><code class="language-perl">sub greet_one($name) {
+    say "Hello, $name!";
+}</code></pre>
+
+            <p>Эквивалент традиционной записи:</p>
+            <pre><code class="language-perl">sub greet_one {
+    die "Too many arguments" if @_ &lt; 1;
+    die "Too few arguments" if @_ &gt; 1;
+    my $name = shift;
+    say "Hello, $name!";
+}</code></pre>
+
+            <p>Можно задать значение по умолчанию:</p>
+            <pre><code class="language-perl">sub greet_one($name = 'Bruce') {
+    say "Hello, $name!";
+}</code></pre>
+
+            <p>Агрегатные параметры в конце списка:</p>
+            <pre><code class="language-perl">sub greet_all($leader, @everyone) {
+    say "Hello, $leader!";
+    say "Hi also, $_." for @everyone;
+}
+
+sub make_nested_hash($name, %pairs) {
+    return { $name =&gt; \%pairs };
+}</code></pre>
+
+            <p>Функция без параметров:</p>
+            <pre><code class="language-perl">sub no_gifts_please() {
+    say 'I have too much stuff already.';
+}</code></pre>
+
+            <p>Попытка передать аргументы в такую функцию вызовет исключение "Too many arguments for subroutine".</p>
+
+            <h3>Дополнительно</h3>
+            <p>Подробности о сигнатурах ищите в <code>perldoc perlsub</code>, в разделе "Signatures".</p>
+            <p>Есть альтернативы на CPAN: <code>Method::Signatures</code> (начиная с Perl 5.8) и <code>Kavorka</code> (с Perl 5.14).</p>
+            <h2>Стоит ли использовать сигнатуры?</h2>
+            <p>Несмотря на экспериментальный статус встроенных сигнатур функций и дополнительные зависимости модулей с CPAN, все эти варианты могут сделать ваш код немного короче, понятнее и удобнее для поддержки.</p>
+            <p>Экспериментируйте и выбирайте, что лучше подходит вам и вашей команде. Даже простое использование позиционных параметров уже даёт ощутимые преимущества.</p>
+
+            <h2>Флаттенинг</h2>
+            <p>Перемещение списка аргументов в <code>@_</code> происходит на стороне вызывающего кода. Например, передача хэша превращает его в список пар ключ/значение:</p>
+            <pre><code class="language-perl">my %pet_names_and_types = (
+    Lucky =&gt; 'dog',
+    Rodney =&gt; 'dog',
+    Tuxedo =&gt; 'cat',
+    Petunia =&gt; 'cat',
+    Rosie =&gt; 'dog',
+);
+show_pets( %pet_names_and_types );
+
+sub show_pets {
+    my %pets = @_;
+    while (my ($name, $type) = each %pets) {
+        say "$name is a $type";
+    }
+}</code></pre>
+
+            <p>Порядок элементов может варьироваться, но всегда ключ следует перед соответствующим значением. Это поведение удобно, но требует осторожности при смешивании скаляров и агрегатов в параметрах.</p>
+
+            <p>Например, для фильтрации по типу животного:</p>
+            <pre><code class="language-perl">sub show_pets_by_type {
+    my ($type, %pets) = @_;
+    while (my ($name, $species) = each %pets) {
+        next unless $species eq $type;
+        say "$name is a $species";
+    }
+}
+
+my %pet_names_and_types = (
+    Lucky =&gt; 'dog',
+    Rodney =&gt; 'dog',
+    Tuxedo =&gt; 'cat',
+    Petunia =&gt; 'cat',
+    Rosie =&gt; 'dog',
+);
+
+show_pets_by_type( 'dog', %pet_names_and_types );
+show_pets_by_type( 'cat', %pet_names_and_types );
+show_pets_by_type( 'moose', %pet_names_and_types );</code></pre>
+
+            <p>С использованием сигнатур можно упростить:</p>
+            <pre><code class="language-perl">sub show_pets_by_type($type, %pets) {
+    ...
+}</code></pre>
+
+            <h2>Захват параметров ("Slurping")</h2>
+            <p>Когда происходит присваивание списка, оставшиеся элементы жадно захватываются:</p>
+            <pre><code class="language-perl">sub show_pets_by_type {
+    my $type = pop;
+    my %pets = @_;
+    ...
+}</code></pre>
+            <p>Но это ухудшает читаемость. Чтобы избежать нежелательного флаттенинга агрегатов, используйте ссылки.</p>
+
+            <h2>Алиасинг</h2>
+            <p><code>@_</code> в Perl не копирует аргументы, а создаёт ссылки на переданные значения. Если вы измените <code>@_</code> напрямую, это изменит оригинальные данные.</p>
+            <p>Пример:</p>
+            <pre><code class="language-perl">sub modify_name {
+    $_[0] = reverse $_[0];
+}
+
+my $name = 'Orange';
+modify_name( $name );
+say $name;
+# выведет egnarO</code></pre>
+
+            <p>Будьте осторожны: либо сразу распаковывайте <code>@_</code> в локальные переменные, либо чётко документируйте изменения аргументов.</p>
+            <h2>Функции и пространства имён</h2>
+            <p>Каждая функция принадлежит пространству имён (Package). Функции без явного объявления пространства находятся в <code>main</code>.</p>
+            <p>Вы можете явно указать пространство имён при объявлении функции:</p>
+            <pre><code class="language-perl">sub Extensions::Math::add { ... }</code></pre>
+            <p>Perl создаст пространство автоматически. Пространства имён остаются открытыми для изменений во время выполнения программы.</p>
+
+            <p>Вызов функций внутри одного пространства можно делать по короткому имени. Для обращения к функциям из другого пространства нужно использовать полное имя:</p>
+            <pre><code class="language-perl">package main;
+Extensions::Math::add( $scalar, $vector );</code></pre>
+
+            <h3>Лексические функции</h3>
+            <p>В Perl 5.18 появилась экспериментальная возможность объявления функций, видимых только в пределах лексической области. Подробнее — в <code>perldoc perlsub</code> ("Lexical Subroutines").</p>
+
+            <h2>Импорт функций</h2>
+            <p>Когда вы используете <code>use</code>, Perl автоматически вызывает метод <code>import()</code> модуля:</p>
+            <pre><code class="language-perl">use strict;</code></pre>
+            <p>Это аналогично:</p>
+            <pre><code class="language-perl">BEGIN {
+    require strict;
+    strict-&gt;import();
+}</code></pre>
+
+            <p>Примеры с аргументами:</p>
+            <pre><code class="language-perl">use strict 'refs';
+use strict qw( subs vars );</code></pre>
+            <p>Их эквивалент через <code>require</code> и ручной вызов <code>import</code>:</p>
+            <pre><code class="language-perl">BEGIN {
+    require strict;
+    strict-&gt;import('refs');
+    strict-&gt;import('subs', 'vars');
+}</code></pre>
+
+            <p><code>use</code> оборачивает код в <code>BEGIN</code>-блок, чтобы импортированные функции были доступны компилятору сразу.</p>
+
+            <h2>Отчёты об ошибках</h2>
+            <p>Для получения информации о месте вызова функции используйте <code>caller()</code>. Без аргументов <code>caller()</code> возвращает пространство имён, имя файла и номер строки вызова:</p>
+            <pre><code class="language-perl">package main;
+main();
+
+sub main {
+    show_call_information();
+}
+
+sub show_call_information {
+    my ($package, $file, $line) = caller();
+    say "Called from $package in $file:$line";
+}</code></pre>
+
+            <p>Если передать <code>caller()</code> число, можно получить информацию об уровне выше:</p>
+            <pre><code class="language-perl">sub show_call_information {
+    my ($package, $file, $line, $func) = caller(0);
+    say "Called $func from $package in $file:$line";
+}</code></pre>
+
+            <p>Модуль <code>Carp</code> использует <code>caller</code> для улучшения сообщений об ошибках. Вместо <code>die</code> в библиотечном коде используйте <code>croak()</code>, чтобы ошибка выглядела как вызванная внешним кодом. Для предупреждений используйте <code>carp()</code>.</p>
+
+            <p>Используйте <code>caller</code> (или <code>Carp</code>) для валидации параметров и проверки предусловий в функциях, чтобы указывать на ошибки вызывающего кода.</p>
+            <h2>Валидация аргументов</h2>
+            <p>Хотя Perl старается "делать то, что вы хотите", у него мало встроенных механизмов проверки аргументов функций. Чтобы проверить количество аргументов, используйте скалярный контекст для <code>@_</code>:</p>
+            <pre><code class="language-perl">sub add_numbers {
+    croak 'Expected two numbers, received: ' . @_ unless @_ == 2;
+    ...
+}</code></pre>
+            <p>Функция <code>croak()</code> корректно укажет ошибку с точки зрения вызывающего кода.</p>
+            <p>Проверка типов сложнее из-за особенностей преобразований типов в Perl. Для надёжной проверки параметров используйте CPAN-модули вроде <code>Params::Validate</code>.</p>
+
+            <h2>Продвинутые функции</h2>
+
+            <h3>Контекст выполнения</h3>
+            <p>Функции могут определять, в каком контексте их вызвали: void, scalar или list. Для этого используется <code>wantarray</code>:</p>
+            <pre><code class="language-perl">sub context_sensitive {
+    my $context = wantarray();
+    return qw( List context ) if $context;
+    say 'Void context' unless defined $context;
+    return 'Scalar context' unless $context;
+}
+
+context_sensitive();
+say my $scalar = context_sensitive();
+say context_sensitive();</code></pre>
+
+            <p><code>wantarray</code> может быть полезен для избежания лишних вычислений в void-контексте. Иногда удобнее писать отдельные функции для разных контекстов.</p>
+
+            <p>Дополнительно: на CPAN доступны модули <code>Want</code> и <code>Contextual::Return</code> для более мощного управления контекстом выполнения.</p>
+
+            <h3>Рекурсия</h3>
+            <p>Рассмотрим задачу поиска элемента в отсортированном массиве через деление пополам:</p>
+            <pre><code class="language-perl">use Test::More;
+my @elements = ( 1, 5, 6, 19, 48, 77, 997, 1025, 7777, 8192, 9999 );
+
+ok elem_exists( 1, @elements ), 'found first element in array';
+ok elem_exists( 9999, @elements ), 'found last element in array';
+ok ! elem_exists( 998, @elements ), 'did not find missing element';
+ok ! elem_exists( -1, @elements ), 'did not find missing element';
+ok ! elem_exists( 10000, @elements ), 'did not find missing element';
+ok elem_exists( 77, @elements ), 'found middle element';
+ok elem_exists( 48, @elements ), 'found lower half element';
+ok elem_exists( 997, @elements ), 'found upper half element';
+
+done_testing();</code></pre>
+
+            <p>Пример рекурсивной функции <code>elem_exists</code>:</p>
+            <pre><code class="language-perl">sub elem_exists {
+    my ($item, @array) = @_;
+    return unless @array;
+    my $midpoint = int( (@array / 2) - 0.5 );
+    my $miditem = $array[ $midpoint ];
+    return 1 if $item == $miditem;
+    return if @array == 1;
+    return elem_exists($item, @array[0 .. $midpoint]) if $item &lt; $miditem;
+    return elem_exists($item, @array[$midpoint + 1 .. $#array]);
+}</code></pre>
+
+            <p>Каждый вызов создаёт новый стековый фрейм с отдельной лексической средой. Поэтому важно наличие условия остановки рекурсии.</p>
+
+            <p>Любую рекурсивную программу можно переписать без рекурсии, но метод "разделяй и властвуй" остаётся удобным решением многих задач.</p>
+
+            <p>Для дальнейшего изучения рекурсии и функционального программирования в Perl рекомендуем книгу <a href="http://hop.perl.plover.com/" target="_blank"><em>Higher Order Perl</em></a> (доступна бесплатно).</p>
+            <h2>Лексические переменные</h2>
+            <p>Каждый вызов функции создаёт отдельную область видимости и стековый фрейм. Хотя определение <code>elem_exists()</code> создаёт один набор лексических переменных (<code>$item</code>, <code>@array</code>, <code>$midpoint</code>, <code>$miditem</code>), каждый вызов функции хранит их значения независимо.</p>
+            <p>Таким образом, функция может безопасно вызывать саму себя:</p>
+            <pre><code class="language-perl">use Carp 'cluck';
+
+sub elem_exists {
+    my ($item, @array) = @_;
+    cluck "[$item] (@array)";
+    ...
+}</code></pre>
+
+            <h2>Хвостовая рекурсия (Tail Calls)</h2>
+            <p>Недостатком рекурсии является риск бесконечных вызовов. Поэтому в <code>elem_exists()</code> предусмотрено несколько условий выхода. Perl предупреждает о глубокой рекурсии сообщением <em>"Deep recursion on subroutine"</em> после примерно 100 вызовов.</p>
+
+            <p>Хвостовая рекурсия — это когда функция возвращает результат вызова самой себя без дополнительных операций. Пример кандидата на оптимизацию:</p>
+            <pre><code class="language-perl">return elem_exists($item, @array[0 .. $midpoint]) if $item &lt; $miditem;
+return elem_exists($item, @array[$midpoint + 1 .. $#array]);</code></pre>
+
+            <p>Perl сам по себе не оптимизирует хвостовую рекурсию. Однако можно использовать специальную форму <code>goto</code> для замены текущего вызова:</p>
+            <pre><code class="language-perl">if ($item &lt; $miditem) {
+    @_ = ($item, @array[0 .. $midpoint]);
+    goto &elem_exists;
+} else {
+    @_ = ($item, @array[$midpoint + 1 .. $#array]);
+    goto &elem_exists;
+}</code></pre>
+
+            <p>Такой приём помогает избежать чрезмерного расхода памяти при глубокой рекурсии.</p>
+
+            <h2>Подводные камни и особенности</h2>
+
+            <h3>Старый стиль вызова функций</h3>
+            <p>Perl по-прежнему поддерживает устаревший синтаксис вызова функций с амперсандом <code>&amp;</code>:</p>
+            <pre><code class="language-perl"># старый стиль — избегать
+my $result = &amp;calculate_result( 52 );
+
+# очень старый стиль — категорически избегать
+my $result = do &amp;calculate_result( 42 );</code></pre>
+
+            <p>Использование амперсанда отключает проверку прототипов и автоматически передаёт <code>@_</code>, что может привести к неожиданным эффектам.</p>
+
+            <h3>Отсутствие скобок</h3>
+            <p>Если опустить скобки при вызове функции, Perl может неправильно интерпретировать код. Пример с потенциальной ошибкой:</p>
+            <pre><code class="language-perl"># потенциальная ошибка
+ok elem_exists 1, @elements, 'found first element';</code></pre>
+
+            <p>В этом случае строка 'found first element' будет ошибочно передана в <code>elem_exists()</code> вместо функции <code>ok()</code>. Это приведёт к скрытым ошибкам.</p>
+
+            <p>Вывод: разумное использование скобок улучшает читаемость кода и снижает риск ошибок.</p>
+            <h2>Область видимости (Scope)</h2>
+            <p>Всё, что имеет имя в Perl (переменная, функция, файловый дескриптор, класс), имеет свою область видимости. Она определяет продолжительность жизни и доступность сущности. Области видимости помогают инкапсулировать данные и избегать утечек реализации.</p>
+
+            <h3>Лексическая область видимости</h3>
+            <p>Лексическая область (lexical scope) — это та, что очевидна читателю. Любой блок в фигурных скобках создаёт новую область: <code>{ }</code>, тело цикла, <code>sub</code>, <code>eval</code>, <code>package</code> и т.п.</p>
+            <p>Компилятор Perl разрешает лексическую область на этапе компиляции. Переменные, объявленные через <code>my</code>, видимы только внутри текущей области и вложенных в неё:</p>
+            <pre><code class="language-perl">{
+    package Robot::Butler;
+    my $battery_level;
+
+    sub tidy_room {
+        my $timer;
+        do {
+            my $dustpan;
+            ...
+        } while (@_);
+
+        for (@_) {
+            my $polish_cloth;
+            ...
+        }
+    }
+}</code></pre>
+
+            <p><code>$battery_level</code> виден во всех четырёх областях. <code>$timer</code> — в методе и вложенных блоках. <code>$dustpan</code> — только в <code>do</code>-блоке, <code>$polish_cloth</code> — только в <code>for</code>.</p>
+
+            <h4>Затенение переменных</h4>
+            <p>Объявление переменной с тем же именем внутри вложенной области затеняет внешнюю:</p>
+            <pre><code class="language-perl">my $name = 'Jacob';
+{
+    my $name = 'Edward';
+    say $name; # Edward
+}
+say $name;     # Jacob</code></pre>
+            <p>Это допустимо и иногда полезно, но может привести к путанице. Лучше ограничивать области переменных.</p>
+
+            <p>Интересный случай — <code>for my $var</code>: переменная объявляется вне блока, но область действия — внутри блока:</p>
+            <pre><code class="language-perl">my $cat = 'Brad';
+for my $cat (qw( Jack Daisy Petunia Tuxedo Choco )) {
+    say "Внутренний кот: $cat";
+}
+say "Внешний кот: $cat";</code></pre>
+
+            <p>Функции — именованные и анонимные — также создают лексические области. Это основа замыканий (Closures).</p>
+
+            <h3>Область our</h3>
+            <p><code>our</code> объявляет псевдоним для глобальной переменной пакета. Само имя будет доступно повсюду (через полное имя), но псевдоним — только в пределах лексической области:</p>
+            <pre><code class="language-perl">our $VERSION = '1.0';</code></pre>
+            <p>Это полезно, например, для <code>$VERSION</code> или <code>$AUTOLOAD</code>. Совместимо с <code>strict 'vars'</code>.</p>
+
+            <h3>Динамическая область (dynamic scope)</h3>
+            <p>В отличие от лексической, динамическая область определяет видимость через стек вызовов. Она применима только к глобальным переменным (<code>our</code>), а не к <code>my</code>.</p>
+
+            <pre><code class="language-perl">our $scope;
+
+sub inner {
+    say $scope;
+}
+
+sub middle {
+    say $scope;
+    inner();
+}
+
+sub main {
+    say $scope;
+    local $scope = 'main() scope';
+    middle();
+}
+
+$scope = 'outer scope';
+main();
+say $scope;</code></pre>
+
+            <p>В этом примере значение <code>$scope</code> временно меняется через <code>local</code> и становится видимым во всех вызовах, пока активна <code>main()</code>. После выхода из неё значение возвращается.</p>
+
+            <p>Lexical-переменные хранятся в структуре <strong>lexpad</strong>, которая создаётся при каждом входе в область. Это позволяет функциям — особенно рекурсивным — иметь независимые переменные.</p>
+
+            <p>Package-переменные и функции хранятся в <strong>symbol table</strong> пакета. Импорт и <code>local</code> работают с ней, и поэтому нельзя локализовать <code>my</code>-переменные — только глобальные.</p>
+
+            <p><code>local</code> особенно полезен с магическими переменными:</p>
+            <ul>
+                <li><code>$/</code> — разделитель строк ввода</li>
+                <li><code>$!</code> — последняя ошибка системы</li>
+                <li><code>$@</code> — ошибка последнего <code>eval</code></li>
+                <li><code>$|</code> — автофлаш вывода</li>
+            </ul>
+
+            <p>Ограничивайте область <code>local</code> как можно уже, чтобы избежать побочных эффектов.</p>
+            <h2>Область видимости state</h2>
+            <p>Ключевое слово <code>state</code> позволяет объявлять лексические переменные с однократной инициализацией и сохранением значения между вызовами функции:</p>
+            <pre><code class="language-perl">sub counter {
+    state $count = 1;
+    return $count++;
+}
+
+say counter();
+say counter();
+say counter();</code></pre>
+            <p>Вывод: 1, 2, 3. Если заменить <code>state</code> на <code>my</code>, результат будет 1, 1, 1.</p>
+
+            <p>Можно задать начальное значение через выражение:</p>
+            <pre><code class="language-perl">sub counter {
+    state $count = shift;
+    return $count++;
+}
+
+say counter(2);
+say counter(4);
+say counter(6);</code></pre>
+            <p>Результат будет: 2, 3, 4 — потому что <code>shift</code> срабатывает только один раз, при первом вызове.</p>
+
+            <p>Чтобы избежать нежелательного потребления аргументов, можно переписать:</p>
+            <pre><code class="language-perl">sub counter {
+    my ($initial_value, $text) = @_;
+    state $count = $initial_value;
+    say "Second arg is: $text";
+    return $count++;
+}
+
+say counter(2, 'two');
+say counter(4, 'four');
+say counter(6, 'six');</code></pre>
+
+            <h2>Анонимные функции</h2>
+            <p>Анонимная функция — это функция без имени. Она ведёт себя так же, как именованная: её можно вызывать, передавать ей параметры, возвращать значения и брать на неё ссылку. Единственный способ обратиться к ней — через ссылку.</p>
+
+            <h3>Диспетчеризация (dispatch table)</h3>
+            <p>Часто используется идиома, при которой хеш связывает команды с соответствующими функциями:</p>
+            <pre><code class="language-perl">my %dispatch = (
+    plus   =&gt; \&amp;add_two_numbers,
+    minus  =&gt; \&amp;subtract_two_numbers,
+    times  =&gt; \&amp;multiply_two_numbers,
+);
+
+sub add_two_numbers      { $_[0] + $_[1] }
+sub subtract_two_numbers { $_[0] - $_[1] }
+sub multiply_two_numbers { $_[0] * $_[1] }
+
+sub dispatch {
+    my ($left, $op, $right) = @_;
+    return unless exists $dispatch{ $op };
+    return $dispatch{ $op }-&gt;( $left, $right );
+}</code></pre>
+            <p>Функция <code>dispatch()</code> может вызываться, например, как <code>dispatch(2, 'times', 2)</code> и вернёт результат 4.</p>
+
+            <h3>Объявление анонимных функций</h3>
+            <p>Если вызвать <code>sub</code> без имени — получится анонимная функция. Это удобно прямо внутри таблицы:</p>
+            <pre><code class="language-perl">my %dispatch = (
+    plus      =&gt; sub { $_[0] + $_[1] },
+    minus     =&gt; sub { $_[0] - $_[1] },
+    times     =&gt; sub { $_[0] * $_[1] },
+    dividedby =&gt; sub { $_[0] / $_[1] },
+    raisedto  =&gt; sub { $_[0] ** $_[1] },
+);</code></pre>
+
+            <p>Такой подход полезен, когда поведение простое и не требует повторного использования или отдельного определения.</p>
+            <h2>Защищённая диспетчеризация (Defensive Dispatch)</h2>
+            <p>В таблице диспетчеризации пользователь может вызвать только те функции, которые явно в ней указаны. Если же использовать переданную строку как имя функции напрямую, злоумышленник может вызвать любую функцию в любом пространстве имён:</p>
+            <pre><code class="language-perl">dispatch('Internal::Functions::malicious_function');</code></pre>
+
+            <h3>Вызов анонимных функций как аргументов</h3>
+            <p>Анонимные функции можно передавать как аргументы другим функциям:</p>
+            <pre><code class="language-perl">sub invoke_anon_function {
+    my $func = shift;
+    return $func-&gt;( @_ );
+}
+
+sub named_func {
+    say 'I am a named function!';
+}
+
+invoke_anon_function( \&amp;named_func );
+invoke_anon_function( sub { say 'Who am I?' } );</code></pre>
+
+            <h2>Имена анонимных функций</h2>
+            <p>С помощью introspection (самоанализа кода) можно определить, является ли функция именованной или анонимной — например, с помощью <code>caller()</code> или модуля <code>Sub::Identify</code>:</p>
+
+            <pre><code class="language-perl">package ShowCaller;
+
+sub show_caller {
+    my ($package, $file, $line, $sub) = caller(1);
+    say "Called from $sub in $package:$file:$line";
+}
+
+sub main {
+    my $anon_sub = sub { show_caller() };
+    show_caller();
+    $anon_sub-&gt;();
+}
+
+main();</code></pre>
+
+            <p>Результат будет примерно такой:</p>
+            <pre><code>Called from ShowCaller::main in ShowCaller:anoncaller.pl:20
+Called from ShowCaller::__ANON__ in ShowCaller:anoncaller.pl:17</code></pre>
+
+            <p><code>__ANON__</code> указывает, что функция анонимна и у неё нет имени, которое Perl может показать.</p>
+
+            <h3>Присвоение имени анонимной функции</h3>
+            <p>Модуль <code>Sub::Name</code> позволяет явно задать имя анонимной функции:</p>
+            <pre><code class="language-perl">use Sub::Name;
+use Sub::Identify 'sub_name';
+
+my $anon = sub {};
+say sub_name( $anon );
+
+my $named = subname( 'pseudo-anonymous', $anon );
+say sub_name( $named );
+say sub_name( $anon );
+say sub_name( sub {} );</code></pre>
+
+            <p>Вывод будет примерно такой:</p>
+            <pre><code>__ANON__
+pseudo-anonymous
+pseudo-anonymous
+__ANON__</code></pre>
+
+            <p>Важно: <strong>все ссылки</strong> на одну и ту же функцию указывают на одно и то же место в памяти. Переименование одной из них через <code>subname()</code> влияет на все остальные.</p>
+            <h2>Неявные анонимные функции</h2>
+            <p>Perl позволяет передавать анонимные функции без ключевого слова <code>sub</code>, например, в функциях с прототипами (см. <code>map</code>, <code>eval</code>). Это позволяет писать "отложенные" вызовы, которые выглядят не как обычные функции.</p>
+
+            <p>Пример с использованием модуля <code>Test::Fatal</code>:</p>
+            <pre><code class="language-perl">use Test::More;
+use Test::Fatal;
+
+my $croaker = exception { die 'I croak!' };
+my $liver   = exception { 1 + 1 };
+
+like $croaker, qr/I croak/, 'die() should croak';
+is $liver, undef, 'addition should live';
+
+done_testing();</code></pre>
+
+            <p>Эквивалентный более явный вариант:</p>
+            <pre><code class="language-perl">my $croaker = exception( sub { die 'I croak!' } );
+my $liver   = exception( sub { 1 + 1 } );</code></pre>
+
+            <p>Или с передачей ссылок на именованные функции:</p>
+            <pre><code class="language-perl">sub croaker { die 'I croak!' }
+sub liver   { 1 + 1 }
+
+my $croaker = exception \&croaker;
+my $liver   = exception \&liver;</code></pre>
+
+            <p>НО: нельзя передавать ссылку из переменной — это вызовет ошибку:</p>
+            <pre><code class="language-perl">my $croak_ref = \&croaker;
+my $live_ref  = \&liver;
+
+# НЕ РАБОТАЕТ
+my $croaker = exception $croak_ref;
+my $liver   = exception $live_ref;</code></pre>
+
+            <p>Ошибка от Perl будет: <code>Type of arg 1 to ... must be block or sub {}</code>.</p>
+
+            <p>Также нельзя оставлять запятую после блока:</p>
+            <pre><code class="language-perl">dies_ok { die 'Boom!' } 'тест';</code></pre>
+
+            <p>Такая особенность — результат парсера Perl, поэтому используйте аккуратно и обязательно документируйте поведение API.</p>
+
+            <h2>Замыкания (Closures)</h2>
+            <p>Замыкание — это функция, использующая лексические переменные из внешней области видимости. Даже если функция анонимная, она "запоминает" окружение, в котором была создана.</p>
+
+            <h3>Создание замыканий</h3>
+            <p>Простой пример:</p>
+            <pre><code class="language-perl">my $filename = shift @ARGV;
+
+sub get_filename {
+    return $filename;
+}</code></pre>
+
+            <p><code>get_filename()</code> использует лексическую переменную <code>$filename</code>, находящуюся вне тела функции.</p>
+
+            <p>Более интересный пример — создание итератора:</p>
+            <pre><code class="language-perl">sub make_iterator {
+    my @items = @_;
+    my $count = 0;
+    return sub {
+        return if $count == @items;
+        return $items[ $count++ ];
+    }
+}
+
+my $cousins = make_iterator(qw(
+    Rick Alex Kaycee Eric Corey Mandy Christine Alex
+));
+
+say $cousins-&gt;() for 1 .. 6;</code></pre>
+
+            <p>Даже после выхода из <code>make_iterator()</code>, возвращённая функция сохраняет доступ к <code>@items</code> и <code>$count</code> — благодаря замыканию.</p>
+
+            <p>Каждый вызов <code>make_iterator()</code> создаёт отдельное окружение:</p>
+            <pre><code class="language-perl">my $aunts = make_iterator(qw(
+    Carole Phyllis Wendy Sylvia Monica Lupe
+));
+
+say $cousins-&gt;();
+say $aunts-&gt;();</code></pre>
+
+            <p>Таким образом, переменные инкапсулированы, и доступны только функции-замыканию.</p>
+
+            <p>Это можно использовать для защиты переменных:</p>
+            <pre><code class="language-perl">{
+    my $private_variable;
+    sub set_private { $private_variable = shift }
+    sub get_private { $private_variable }
+}</code></pre>
+
+            <p>Обратите внимание: именованные функции имеют глобальную область пакета, поэтому их нельзя вкладывать друг в друга. Вложенные функции не будут делить одну область, и Perl предупредит вас об этом.</p>
+            <h2>Нарушение приватности</h2>
+            <p>Модуль CPAN <code>PadWalker</code> позволяет нарушить лексическую инкапсуляцию. Но тот, кто это делает — сам и чинит возможные баги.</p>
+
+            <h2>Практическое применение замыканий</h2>
+            <p>Замыкания полезны не только при итерации по небольшим спискам. Например, вы можете генерировать значения последовательности Фибоначчи "по запросу", не храня все значения в памяти:</p>
+
+            <pre><code class="language-perl">sub gen_fib {
+    my @fibs = (0, 1);
+    return sub {
+        my $item = shift;
+        if ($item &gt;= @fibs) {
+            for my $calc (@fibs .. $item) {
+                $fibs[$calc] = $fibs[$calc - 2] + $fibs[$calc - 1];
+            }
+        }
+        return $fibs[$item];
+    }
+}
+
+my $fib = gen_fib();
+say $fib-&gt;(42);</code></pre>
+
+            <p>Функция запоминает уже вычисленные значения и пересчитывает только новые.</p>
+
+            <h3>Обобщение кэширующего поведения</h3>
+            <p>Можно выделить поведение кэширования в отдельную функцию и использовать её с разными алгоритмами:</p>
+
+            <pre><code class="language-perl">sub gen_caching_closure {
+    my ($calc_element, @cache) = @_;
+    return sub {
+        my $item = shift;
+        $calc_element-&gt;($item, \@cache) unless $item &lt; @cache;
+        return $cache[$item];
+    };
+}
+
+sub gen_fib {
+    my @fibs = (0, 1, 1);
+    return gen_caching_closure(sub {
+        my ($item, $fibs) = @_;
+        for my $calc ((@$fibs - 1) .. $item) {
+            $fibs-&gt;[$calc] = $fibs-&gt;[$calc - 2] + $fibs-&gt;[$calc - 1];
+        }
+    }, @fibs);
+}</code></pre>
+
+            <p>Такой подход разделяет логику кэширования и логику вычисления, повышая читаемость и переиспользуемость.</p>
+
+            <h2>Частичное применение (Partial Application)</h2>
+            <p>Если функция всегда вызывается с одними и теми же аргументами, их можно зафиксировать через замыкание:</p>
+
+            <pre><code class="language-perl">sub make_sundae {
+    my %args = @_;
+    ...
+}
+
+my $make_cart_sundae = sub {
+    return make_sundae(@_,
+        ice_cream =&gt; 'French Vanilla',
+        banana    =&gt; 'Cavendish',
+    );
+};</code></pre>
+
+            <p>Теперь достаточно передавать только переменные части заказа. Для подключения такой функции в другой модуль можно использовать <code>Sub::Install</code>.</p>
+
+            <h2>Сравнение: state против замыкания</h2>
+            <p>Оба подхода используют лексическое окружение:</p>
+
+            <pre><code class="language-perl">{
+    my $safety = 0;
+    sub enable_safety  { $safety = 1 }
+    sub disable_safety { $safety = 0 }
+    sub do_something_awesome {
+        return if $safety;
+        ...
+    }
+}</code></pre>
+
+            <p>Все функции используют одну переменную <code>$safety</code>, инкапсулированную снаружи. Но если переменная нужна только одной функции — проще использовать <code>state</code>:</p>
+
+            <pre><code class="language-perl">sub serve_customer {
+    state $cust_count = 0;
+    $cust_count++;
+    my $order = shift;
+    add_sprinkles($order) if $cust_count % 100 == 0;
+}</code></pre>
+
+            <p><code>state</code> также работает в анонимных функциях:</p>
+
+            <pre><code class="language-perl">sub make_counter {
+    return sub {
+        state $count = 0;
+        return $count++;
+    }
+}</code></pre>
+
+            <p>Хотя здесь преимущества не столь очевидны.</p>
+
+            <h2>state против псевдо-state</h2>
+            <p>Раньше в Perl можно было сохранять значение <code>my</code>-переменной между вызовами через "обман" компилятора, используя <code>if 0</code>:</p>
+
+            <pre><code class="language-perl">sub old_way {
+    my $cached if 0;
+    $cached++;
+    return $cached;
+}</code></pre>
+
+            <p>Сейчас это считается плохой практикой. Лучше использовать <code>state</code>.</p>
+            <h2>Устаревшие трюки с инициализацией</h2>
+            <p>Использование постфиксного условия с <code>my</code> переменными теперь вызывает предупреждение о депрекации. Лучше использовать <code>state</code>:</p>
+            <pre><code class="language-perl">sub inadvertent_state {
+    state $counter = 1; # вместо my $counter = 1 if 0;
+}</code></pre>
+
+            <h2>Атрибуты</h2>
+            <p>Переменные и функции могут иметь атрибуты:</p>
+            <pre><code class="language-perl">my $fortress :hidden;
+sub erupt_volcano :ScienceProject { ... }</code></pre>
+            <p>Они обрабатываются соответствующими хендлерами. Например, <code>:Test</code> в <code>Test::Class</code>:</p>
+            <pre><code class="language-perl">sub setup_tests :Test(setup) { ... }
+sub test_monkey_creation :Test(10) { ... }
+sub shutdown_tests :Test(teardown) { ... }</code></pre>
+
+            <p>Это позволяет чётко разделить роли методов без конфликта имён.</p>
+
+            <h3>Минусы атрибутов</h3>
+            <ul>
+                <li>Плохая читаемость</li>
+                <li>Непредсказуемость поведения</li>
+                <li>Могут изменять семантику функции (например, <code>:memoize</code>)</li>
+            </ul>
+            <p>Лучше использовать <code>Attribute::Handlers</code> или <code>Attribute::Lexical</code>, чем стандартный <code>attributes</code>.</p>
+
+            <h2>AUTOLOAD</h2>
+            <p>Если функция не определена, и вызов её не удаётся — Perl вызовет <code>AUTOLOAD()</code>:</p>
+            <pre><code class="language-perl">sub AUTOLOAD {
+    our $AUTOLOAD;
+    say "In AUTOLOAD(@_) for $AUTOLOAD!";
+}</code></pre>
+
+            <p>Можно извлечь имя метода и вернуть подставное значение:</p>
+            <pre><code class="language-perl">sub AUTOLOAD {
+    my ($name) = our $AUTOLOAD =~ /::(\w+)$/;
+    return 'mu';
+}</code></pre>
+
+            <h3>Делегирование через AUTOLOAD</h3>
+            <p>Используется, чтобы проксировать вызовы, например для логирования:</p>
+            <pre><code class="language-perl">sub AUTOLOAD {
+    my ($name) = our $AUTOLOAD =~ /::(\w+)$/;
+    Log::method_call($name, @_);
+    my $self = shift;
+    return $$self->$name(@_);
+}</code></pre>
+
+            <h3>Генерация методов</h3>
+            <p>Вместо постоянного попадания в AUTOLOAD, можно "устанавливать" метод в таблицу символов:</p>
+            <pre><code class="language-perl">sub AUTOLOAD {
+    my ($name) = our $AUTOLOAD =~ /::(\w+)$/;
+    my $method = sub { ... };
+    no strict 'refs';
+    *{$AUTOLOAD} = $method;
+    return $method-&gt;(@_);
+}</code></pre>
+
+            <p>Или использовать <code>goto</code> для замены вызова (tailcall):</p>
+            <pre><code class="language-perl">sub AUTOLOAD {
+    my ($name) = our $AUTOLOAD =~ /::(\w+)$/;
+    my $method = sub { ... };
+    no strict 'refs';
+    *{$AUTOLOAD} = $method;
+    goto &$method;
+}</code></pre>
+
+            <h3>Проблемы AUTOLOAD</h3>
+            <ul>
+                <li>Метод <code>can()</code> не покажет, что функция существует</li>
+                <li>Может случайно перехватить <code>DESTROY</code>, если он не определён</li>
+                <li>Может конфликтовать с <code>import</code>, <code>VERSION</code>, <code>unimport</code></li>
+                <li>Приводит к сложному коду и плохой отладке</li>
+            </ul>
+
+            <p>Лучше всего заранее определить список методов через <code>use subs</code>:</p>
+            <pre><code class="language-perl">use subs qw( red green blue );</code></pre>
+
+            <p>Или переопределить <code>can()</code> для динамического определения метода:</p>
+            <pre><code class="language-perl">sub can {
+    my ($self, $method) = @_;
+    return $self-&gt;SUPER::can($method) || do {
+        return unless $self-&gt;should_generate($method);
+        my $meth_ref = sub { ... };
+        no strict 'refs';
+        *{$method} = $meth_ref;
+        return $meth_ref;
+    };
+}
+
+sub AUTOLOAD {
+    my ($self) = @_;
+    my ($name) = our $AUTOLOAD =~ /::(\w+)$/;
+    return unless my $meth_ref = $self-&gt;can($name);
+    goto &$meth_ref;
+}</code></pre>
+
+            <p>Если Perl жалуется на <code>inherited AUTOLOAD for non-method</code> — значит, вы вызвали функцию в пакете, унаследованном от класса с <code>AUTOLOAD</code>.</p>
+
+            <p><strong>Итог:</strong> AUTOLOAD полезен для быстрых решений, но сложен в сопровождении. Лучше избегать его в серьёзных проектах.</p>
+        </div>
+        <div class="navigation">
+            <a href="chapter4.html">← Предыдущая глава</a>
+            <a href="../index.html">К оглавлению</a>
+            <a href="chapter6.html">Следующая глава →</a>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-perl.min.js"></script>
+</body>
+</html>

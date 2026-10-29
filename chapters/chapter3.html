@@ -1,0 +1,1406 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Глава 3: Управляющие структуры</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Глава 3: Управляющие структуры</h1>
+        <div class="content">
+            <p>Язык Perl представляет собой сочетание нескольких отдельных элементов. В отличие от естественных языков, где можно использовать нюансы тональности и интуицию для передачи смысла через пробелы в знаниях, компьютерам и исходному коду требуется точность.</p>
+            <p>Вы можете писать эффективный Perl-код без углубления во все детали языковых особенностей, но понимание их взаимодействия необходимо для написания хорошего кода.</p>
+
+            <h2>Имена (identifiers)</h2>
+            <p>Имена встречаются повсюду в Perl-программах: вы выбираете их для переменных, функций, пакетов, классов даже файловых дескрипторов. Допустимые имена в Perl начинаются с буквы или подчеркивания и могут содержать комбинации букв, цифр и подчеркиваний. Если активировано pragma utf8 (Unicode и строки, стр. 28), можно использовать любые UTF-8 символы:</p>
+            <pre><code class="language-perl">
+my $name;
+my @_private_names;
+my %Names_to_Addresses;
+sub anAwkwardName3;
+
+# при активации use utf8; 
+package Ingy::Döt::Net;
+</code></pre>
+
+            <p>Недопустимые имена:</p>
+            <pre><code class="language-perl">
+my $invalid name; # пробел недопустим
+my @3; my %~flags; # нельзя начинать с символа или цифры 
+package a-lisp-style-name;
+</code></pre>
+
+            <h2>Имена переменных и сигили (sigils)</h2>
+            <p>Переменные всегда имеют ведущий знак, определяющий их тип. Скалярами ($), массивами (@) и хэшами (%) соответственно:</p>
+            <pre><code class="language-perl">
+my $scalar;
+my @array;
+my %hash;
+</code></pre>
+
+            <p>Сигили разделяют переменные в разных пространствах имён. Например, можно объявить несколько переменных с одинаковым именем, но разными типами:</p>
+            <pre><code class="language-perl">
+my ($bad_name, @bad_name, %bad_name);
+</code></pre>
+
+            <h2>Пространства имён (Namespaces)</h2>
+            <p>Perl позволяет группировать связанные функции и переменные в уникальное пространство имён. Например:</p>
+            <pre><code class="language-perl">
+package DessertShop::IceCream;
+</code></pre>
+
+            <p>Символы двойного двоеточия :: используются для иерархии. Обращение к членам вне пространства требует полной квалификации:</p>
+            <pre><code class="language-perl">
+DessertShop::IceCream::add_sprinkles()
+</code></pre>
+
+            <p>Пространства имён глобальны. Важно следовать соглашениям: пакеты с нижнего регистра резервируются для системных модулей (например, strict), пользовательские начинаются с заглавной буквы.</p>
+            <h2>Переменные</h2>
+            <p>Переменная в Perl — это место хранения значения. Хотя простейшие программы могут работать напрямую со значениями, большинство настоящих программ используют переменные. Подобно алгебре: вы оперируете символами для описания формул. Проще объяснить теорему Пифагора через переменные <code>a</code>, <code>b</code> и <code>c</code>, чем перечислять все возможные тройки чисел.</p>
+
+            <h2>Область видимости переменных</h2>
+            <p>Ваш доступ к переменной определяется её областью видимости. В современном Perl переменные чаще всего имеют <strong>лексическую область видимости</strong>, зависящую от структуры кода. Обычно область создаётся блоком в фигурных скобках <code>{ }</code> или целым файлом.</p>
+            <p>Объявление <code>package</code> без блока не создаёт новую область видимости:</p>
+
+            <pre><code class="language-perl">package Store::Toy;
+my $discount = 0.10;
+package Store::Music;
+# $discount всё ещё видно
+say "Our current discount is $discount!";</code></pre>
+
+            <p>Но если использовать блок <code>{}</code>, появляется новая область видимости:</p>
+
+            <pre><code class="language-perl">package Store::Toy {
+    my $discount = 0.10;
+}
+package Store::Music {
+    # $discount здесь уже не видно
+}
+package Store::BoardGame;
+# $discount всё ещё недоступно</code></pre>
+
+            <h2>Значки переменных (Sigils)</h2>
+            <p>Значок (sigil) переменной определяет её тип: скаляр (<code>$</code>), массив (<code>@</code>), или хеш (<code>%</code>). При доступе к данным значок может меняться в зависимости от операции:</p>
+
+            <pre><code class="language-perl">@values    # весь массив
+$values[0] # один элемент массива
+@values[@indices] # срез массива</code></pre>
+
+            <p>Присваивание массива через срез:</p>
+
+            <pre><code class="language-perl">@values[@indexes] = some_function();</code></pre>
+
+            <p>Или получение одного элемента в скалярном контексте:</p>
+
+            <pre><code class="language-perl">my $element = @values[@indices];</code></pre>
+
+            <h2>Анонимные переменные</h2>
+            <p>Переменные в Perl могут быть анонимными (без имени). Доступ к ним возможен только через ссылки.</p>
+
+            <h2>Переменные, типы и приведение типов</h2>
+            <p>Переменная в Perl — это контейнер и значение одновременно. Тип контейнера (скаляр, массив, хеш) неизменен, но тип значения может меняться. Это может привести к <strong>приведению типов</strong> при операциях.</p>
+
+            <p>Например, чтобы узнать количество элементов в массиве:</p>
+
+            <pre><code class="language-perl">my $count = @items;</code></pre>
+
+            <h2>Значения</h2>
+            <p>Переменные позволяют абстрактно работать с данными. Значения делают программы конкретными и полезными: имя вашей тёти, адрес, расстояние до лунного гольф-клуба и так далее. Формат данных в программе, как правило, строго регламентирован.</p>
+
+            <h2>Строки</h2>
+            <p>Строка в Perl — это текст или бинарные данные без строгой структуры. Строка приобретает смысл, только если вы его задаёте. Литералы строк обычно заключаются в одинарные или двойные кавычки:</p>
+
+            <pre><code class="language-perl">my $name = 'Donner Odinson, Bringer of Despair';
+my $address = "Room 539, Bilskirnir, Valhalla";</code></pre>
+
+            <p>В одинарных строках экранируются только апострофы и обратные слэши:</p>
+
+            <pre><code class="language-perl">my $reminder = 'Don\'t forget to escape ' . 'the single quote!';
+my $exception = 'This string ends with a ' . 'backslash, not a quote: \\';</code></pre>
+
+            <p>Пример экранирования с использованием <code>Test::More</code>:</p>
+
+            <pre><code class="language-perl">use Test::More;
+is 'Modern \\ Perl', 'Modern \\\\ Perl', 'single quotes backslash escaping';
+done_testing();</code></pre>
+
+            <p>Двойные кавычки позволяют вставлять спецсимволы:</p>
+
+            <pre><code class="language-perl">my $tab = "\t";
+my $newline = "\n";
+my $carriage = "\r";
+my $formfeed = "\f";
+my $backspace = "\b";</code></pre>
+
+            <p>Разные способы записи строк:</p>
+
+            <pre><code class="language-perl">my $escaped = "two\nlines";
+my $literal = "two
+lines";
+
+is $escaped, $literal, 'equivalent \n and newline';</code></pre>
+
+            <p>Объединение строк оператором <code>.</code>:</p>
+
+            <pre><code class="language-perl">my $kitten = 'Choco' . ' ' . 'Spidermonkey';</code></pre>
+
+            <p>Интерполяция переменных в двойных кавычках:</p>
+
+            <pre><code class="language-perl">my $factoid = "$name lives at $address!";
+# Эквивалентно
+my $factoid = $name . ' lives at ' . $address . '!';</code></pre>
+
+            <p>Чтобы вставить двойные кавычки в строку:</p>
+
+            <pre><code class="language-perl">my $quote = "\"Ouch,\", he cried. \"That hurt!\"";</code></pre>
+
+            <p>Для удобства можно использовать операторы <code>q</code> и <code>qq</code>
+                <h2>Расширенные строки и heredoc</h2>
+                <p>Для создания строк можно использовать оператор <code>q</code> или <code>qq</code> с различными разделителями:</p>
+    
+                <pre><code class="language-perl">my $quote = qq{"Ouch", he said. "That hurt!"};
+    my $reminder = q^Don't escape the single quote!^;
+    my $complaint = q{It's too early to be awake.};</code></pre>
+    
+                <p>Также Perl поддерживает конструкцию heredoc для присваивания многострочного текста переменной:</p>
+    
+                <pre><code class="language-perl">my $blurb =<<'END_BLURB';
+    He looked up. "Change is the constant on which they all
+    can agree. We instead, born out of time, remain perfect
+    and perfectly self-aware. We only suffer change as we
+    pursue it. It is against our nature. We rebel against
+    that change. Shall we consider them greater for it?"
+    END_BLURB</code></pre>
+    
+                <p>Синтаксис heredoc состоит из трёх частей: двойные угловые скобки <code>&lt;&lt;</code>, тип кавычек (одинарные или двойные), и уникальный идентификатор, завершающий текст. Завершающая метка должна стоять в начале строки без пробелов.</p>
+    
+                <p>Пример использования heredoc внутри функции:</p>
+    
+                <pre><code class="language-perl">sub some_function {
+        my $ingredients =<<'END_INGREDIENTS';
+    Two eggs
+    One cup flour
+    Two ounces butter
+    One-quarter teaspoon salt
+    One cup milk
+    One drop vanilla
+    Season to taste
+    END_INGREDIENTS
+    }</code></pre>
+    
+                <h2>Heredoc и отступы</h2>
+                <p>Если в идентификаторе после <code>&lt;&lt;</code> есть пробел, то и завершающая метка должна содержать аналогичный пробел. Однако Perl не удаляет отступы в самом тексте heredoc, что иногда может вызвать сюрпризы.</p>
+    
+                <h2>Юникод и строки</h2>
+                <p>Unicode — это система кодирования символов всех письменных языков мира. Строки Perl могут быть двух типов:</p>
+                <ul>
+                    <li>Последовательность символов Unicode (каждый имеет свой кодпоинт);</li>
+                    <li>Последовательность октетов (8-битных чисел от 0 до 255).</li>
+                </ul>
+    
+                <p>Важно различать представление данных: память (октеты) и символы (Unicode).</p>
+    
+                <h2>Кодировки символов</h2>
+                <p>Unicode-строка — это набор октетов, сопоставляемых символам по определённой кодировке, например UTF-8. Некоторые кодировки поддерживают только часть символов (ASCII, Latin-1).</p>
+    
+                <p>Perl версии 5.16 поддерживает Unicode 6.1, версии 5.18 — 6.2, 5.20 — 6.3, 5.22 — 7.0.</p>
+    
+                <p>Всегда декодируйте входные данные и кодируйте выходные данные в нужную кодировку!</p>
+    
+                <h2>Юникод в файловых дескрипторах</h2>
+                <p>Пример открытия файла с автоматической декодировкой UTF-8:</p>
+    
+                <pre><code class="language-perl">open my $fh, '&lt;:utf8', $textfile;
+    my $unicode_string = &lt;$fh&gt;;</code></pre>
+    
+                <p>Или через <code>binmode</code> для существующего дескриптора:</p>
+    
+                <pre><code class="language-perl">binmode $fh, ':utf8';
+    my $unicode_string = &lt;$fh&gt;;
+    binmode STDOUT, ':utf8';
+    say $unicode_string;</code></pre>
+    
+                <p>Модуль <code>utf8::all</code> позволяет применить UTF-8 ко всем файловым потокам сразу, но требует понимания работы с Unicode.</p>
+    
+                <h2>Юникод в данных</h2>
+                <p>Для конвертации данных используйте функции модуля <code>Encode</code>:</p>
+    
+                <pre><code class="language-perl">use Encode;
+    my $from_utf8 = decode('utf8', $data);
+    my $to_latin1 = encode('iso-8859-1', $string);</code></pre>
+    
+                <h2>Юникод в исходном коде программ</h2>
+                <p>Чтобы использовать Unicode прямо в исходниках Perl, подключите прагму <code>utf8</code>:</p>
+    
+                <pre><code class="language-perl">use utf8;
+    sub £_to_¥ { ... }
+    my $yen = £_to_¥('1000£');</code></pre>
+    
+                <p>И обязательно сохраните файл в UTF-8!</p>
+    
+                <h2>Юникодные escape-последовательности</h2>
+                <p>В двойных кавычках можно указывать символы через <code>\x{}</code>:</p>
+    
+                <pre><code class="language-perl">my $escaped_thorn = "\x{00FE}";</code></pre>
+    
+                <p>Или использовать имена символов через прагму <code>charnames</code>:</p>
+    
+                <pre><code class="language-perl">use charnames ':full';
+    use Test::More tests => 1;
+    my $escaped_thorn = "\x{00FE}";
+    my $named_thorn = "\N{LATIN SMALL LETTER THORN}";
+    is $escaped_thorn, $named_thorn, 'Thorn equivalence check';</code></pre>
+    
+                <h2>Неявные преобразования</h2>
+                <p>Большинство проблем с Unicode в Perl связано с тем, что строки могут быть либо октетами, либо символами. При неявных преобразованиях Perl иногда неожиданно интерпретирует октеты как Latin-1.</p>
+    
+                <p>Это приводит к скрытым багам, особенно если в тексте только английские символы без диакритики.</p>
+    
+                <p>Запомните: лучше всегда явно указывать кодировку данных на входе и выходе!</p>
+                <p><strong>Modern Perl</strong></p>
+            
+            <pre><code class="language-perl">my $hello = "Hello, ";
+my $greeting = $hello . $name;</code></pre>
+
+            <p>Если переменная $name содержит Alice, проблем не возникнет: представление в Latin-1 совпадает с UTF-8. Если же $name содержит José, возможны три варианта:</p>
+            <ul>
+                <li>$name содержит четыре Unicode-символа.</li>
+                <li>$name содержит четыре октета Latin-1, представляющие символы Unicode.</li>
+                <li>$name содержит пять UTF-8 октетов для тех же символов.</li>
+            </ul>
+
+            <p>Литерал строк может быть:</p>
+            <ul>
+                <li><pre><code class="language-perl">my $hello = "Hello, ";</code></pre> — ASCII-строка.</li>
+                <li><pre><code class="language-perl">my $hello = "½Hola, ";</code></pre> — строка Latin-1 без явного кодирования.</li>
+                <li><pre><code class="language-perl">my $hello = "Kuirabá, ";</code></pre> — Unicode при включенном utf8 или encoding.</li>
+            </ul>
+
+            <p>Если обе строки Unicode, их конкатенация будет корректна. Если же обе октетные последовательности (например Latin-1), результат тоже будет верным. Однако смешивание кодировок (например UTF-8 и Latin-1) приведёт к ошибкам.</p>
+
+            <pre><code class="language-perl">my $binary = 0b101010;
+my $octal = 052;
+my $hex = 0x20;</code></pre>
+            
+            <p>Префиксы 0b, 0 (для восьмиричных) и 0x указывают систему счисления. Внимание: ноль перед числом всегда означает восьмеричное представление.</p>
+
+            <h3>Числа</h3>
+            
+            <pre><code class="language-perl">my $integer = 42;
+my $float = 0.007;
+my $sci_float = 1.02e14;
+my $binary = 0b101010;
+my $octal = 052;
+my $hex = 0x20;
+# (Perl ≥5.22)
+my $hex_float = 0x1.0p-3;</code></pre>
+
+            <p>Внутреннее представление чисел может привести к неточностям (например, <em>1.99 + 1.99 ≠ 4</em>). Используйте Math::BigInt для больших значений.</p>
+
+            <h3>Undef и пустые списки</h3>
+            
+            <pre><code class="language-perl">my $name = undef;
+my $rank; # также undef</code></pre>
+            
+            <p>undef в строковом контексте вызывает предупреждение. Функция defined() проверяет определённость:</p>
+
+            <pre><code class="language-perl">say defined $status;  # → 1
+say defined undef;   # → пустая строка</code></pre>
+
+            <h3>Пустые списки</h3>
+            
+            <pre><code class="language-perl">my $count = () = get_clown_hats();</code></pre>
+            
+            <p>Оператор присваивания возвращает количество элементов, полученных из функции.</p>
+
+            <p>Дополнительные материалы: <a href="https://perldoc.perl.org/perlnumber">perldoc perlnumber</a>, модуль Scalar::Util и <a href="http://www.perl.com/pub/2012/04/perlunicook-standard-preamble.html">Perl Unicode Cookbook</a>.</p>
+            <p>Переменные могут получать значения из вызова функций:</p>
+            <pre><code class="language-perl">my $count = get_clown_hats();</code></pre>
+
+            <p>Списки в Perl:</p>
+            <pre><code class="language-perl">my @first_fibs = (1, 1, 2, 3, 5, 8, 13, 21);
+my ($package, $filename, $line) = caller();
+say name(), ' => ', age();
+my @chars = 'a' .. 'z';
+my @count = 13 .. 27;
+my @stooges = qw! Larry Curly Moe Shemp Joey Kenny !;</code></pre>
+
+            <p>Контекст и срезы:</p>
+            <pre><code class="language-perl">sub context {
+    my $context = wantarray();
+    say defined $context ? ($context ? 'list' : 'scalar') : 'void';
+    return 0;
+}
+my @list_slice = (1, 2, 3)[context()];
+my @array_slice = @list_slice[context()];
+my $array_index = $array_slice[context()];
+say context();
+context();</code></pre>
+
+            <p>Управление потоком:</p>
+            <pre><code class="language-perl">say 'At start';
+say 'In middle';
+say 'At end';</code></pre>
+
+            <p>Условные операторы:</p>
+            <pre><code class="language-perl">say 'Hello, Bob!' if $name eq 'Bob';
+if ($name eq 'Bob') {
+    say 'Hello, Bob!';
+    found_bob();
+}
+if ($name eq 'Bob' && not greeted_bob()) {
+    say 'Hello, Bob!';
+    found_bob();
+}
+say "You're not Bob!" unless $name eq 'Bob';</code></pre>
+
+            <p>Оператор else и elsif:</p>
+            <pre><code class="language-perl">if ($name eq 'Bob') {
+    say 'Hi, Bob!';
+    greet_user();
+} else {
+    say "I don't know you.";
+    shun_user();
+}
+if ($name eq 'Robert') {
+    say 'Hi, Bob!';
+} elsif ($name eq 'James') {
+    say 'Hi, Jim!';
+} elsif ($name eq 'Armando') {
+    say 'Hi, Mando!';
+} else {
+    say "You're not my uncle.";
+}</code></pre>
+
+            <p>Тернарный оператор:</p>
+            <pre><code class="language-perl">my $time_suffix = after_noon($time) ? 'afternoon' : 'morning';</code></pre>
+
+            <p>Короткое замыкание:</p>
+            <pre><code class="language-perl">say 'Both true!' if ok 1, 'one' && ok 1, 'two';
+say 'Either true!' if ok 1, 'one' || ok 1, 'two';</code></pre>
+
+            <p>Циклы foreach и for:</p>
+            <pre><code class="language-perl">foreach (1 .. 10) {
+    say "$_ * $_ = ", $_ * $_;
+}
+for my $i (1 .. 10) {
+    say "$i * $i = ", $i * $i;
+}</code></pre>
+
+            <p>Алиасинг:</p>
+            <pre><code class="language-perl">my @nums = 1 .. 10;
+$_ **= 2 for @nums;
+for my $num (@nums) {
+    $num **= 2;
+}</code></pre>
+
+            <p>С-стиль for:</p>
+            <pre><code class="language-perl">for (my $i = 0; $i <= 10; $i += 2) {
+    say "$i * $i = ", $i * $i;
+}</code></pre>
+
+            <p>Циклы while и until:</p>
+            <pre><code class="language-perl">while (@values) {
+    my $value = shift @values;
+    say $value;
+}
+until ($finished_running) {
+    ...
+}</code></pre>
+
+            <p>do-while:</p>
+            <pre><code class="language-perl">do {
+    say 'What is your name?';
+    my $name = <>;
+    chomp $name;
+    say "Hello, $name!" if $name;
+} until (eof);</code></pre>
+
+            <p>Вложенные циклы и работа с файловыми дескрипторами:</p>
+            <pre><code class="language-perl">open my $fh, '<', $file;
+for my $prefix (@prefixes) {
+    while (<$fh>) {
+        say $prefix, $_;
+    }
+    seek $fh, 0, 0;
+}</code></pre>
+<p><strong>Управление циклами (Loop Control)</strong></p>
+
+            <pre><code class="language-perl">while (&lt;$fh&gt;) {
+    next if /\A#/;
+    ...
+}</code></pre>
+
+            <p>Оператор <em>next</em> пропускает текущую итерацию цикла. Например, чтобы игнорировать комментарии:</p>
+            
+            <p><strong>Варианты выхода вместо вложенных if-ов</strong>:</p>
+            <ul>
+                <li>Использование <em>next</em> с постусловием делает код проще, чем многократные условия внутри блока.</li>
+            </ul>
+
+            <pre><code class="language-perl">last if /\A__END__/;</code></pre>
+
+            <p>Оператор <em>last</em> немедленно завершает цикл. Например, для выхода при встрече маркера __END__.</p>
+            
+            <pre><code class="language-perl">chomp $line;
+if ($line =~ s{\\$}{}) {
+    $line .= &lt;$fh&gt;;
+    redo; # повторить текущую итерацию
+}</code></pre>
+
+            <p>Оператор <em>redo</em> перезапускает текущую итерацию без проверки условия. Позволяет модифицировать данные на месте.</p>
+            
+            <h3>Пример работы с вложенными циклами:</h3>
+            
+            <pre><code class="language-perl">LINE:
+while (&lt;$fh&gt;) {
+    chomp;
+    PREFIX:
+    for my $prefix (@prefixes) {
+        next LINE unless $prefix; # выйти на уровень выше
+        say "$prefix: $_";
+    }
+}</code></pre>
+
+            <h3>Конструкция continue</h3>
+            
+            <p>Блок <em>continue</em> выполняется перед каждой итерацией, даже после next:</p>
+            
+            <pre><code class="language-perl">while ($i &lt; 10 ) {
+    next unless $i % 2;
+    say $i;
+}
+continue {
+    say 'Continuing...';
+    $i++;
+}</code></pre>
+
+            <h3>Операторы switch (given-when)</h3>
+            
+            <p>Современный подход: использование <em>for</em> + <em>when</em>:</p>
+            
+            <pre><code class="language-perl">sub rock {
+    print "I chose rock. ";
+    for (shift) { 
+        when (/paper/)  { say 'You win!' };
+        when (/rock/)   { say 'We tie!' };
+        when (/scissors/){ say 'I win!' };
+        default          { say $confused };
+    }
+}</code></pre>
+
+            <h3>Хвостовые вызовы (Tailcalls)</h3>
+            
+            <p>Оптимизация через <em>goto &function</em>:</p>
+            
+            <pre><code class="language-perl">sub log_and_greet_person {
+    my ($name) = @_;
+    log( "Greeting $name" );
+    goto &greet_person; # замена текущей функции новой
+}</code></pre>
+
+            <h3>Скаляры (Scalars)</h3>
+            
+            <p>Фундаментальный тип данных Perl — скаляр ($):</p>
+            
+            <ul>
+                <li>Может содержать строки, числа, файловые дескрипторы или ссылки.</li>
+                <li>Поддерживает явное преобразование типов:</li>
+                
+                <pre><code class="language-perl">my $value;
+$value = 123.456;   # число
+$value = "test";     # строка
+$value = undef;      # неопределенное значение</code></pre>
+            </ul>
+
+            <p>Контекст определяет поведение операций:</p>
+            
+            <pre><code class="language-perl">my $zip_code = 97123;
+my $city_state_zip = 'Hillsboro, Oregon' . ' ' . $zip_code; # строковый контекст</code></pre>
+
+            <p>Преобразование строк к числам:</p>
+            
+            <pre><code class="language-perl">my $call_sign = 'KBMIU';
+my $next_sign = ++$call_sign; # инкремент строки (работает для алфавитных последовательностей)</code></pre>
+
+            <h4>Важно:</h4>
+            <p>Избегайте резких переходов типов в скалярах, чтобы не запутать читателей кода.</p>
+            <h2>Магия одностороннего увеличения</h2>
+            <p>Это магическое поведение при увеличении строки не имеет обратного действия. Нельзя восстановить прежнее строковое значение выражением <code>$call_sign--</code>.</p>
+            <p>Операция увеличения строки превращает <code>a</code> в <code>b</code> и <code>z</code> в <code>aa</code>, с учётом регистра и набора символов. Например, <code>ZZ9</code> становится <code>AAA0</code>, а <code>ZZ09</code> — <code>ZZ10</code>. Цифры переполняются, как на одометре машины.</p>
+
+            <h2>Ссылки в строковом и числовом контекстах</h2>
+            <p>Оценка ссылки в строковом контексте даёт строку. В числовом контексте — число. Ни одно из этих действий не модифицирует саму ссылку, и восстановить её из результата невозможно:</p>
+            <pre><code class="language-perl">
+my $authors = [qw( Pratchett Vinge Conway )];
+my $stringy_ref = '' . $authors;
+my $numeric_ref = 0 + $authors;
+            </code></pre>
+            <p><code>$authors</code> всё ещё остаётся ссылкой, но <code>$stringy_ref</code> — это просто строка без связи с исходной ссылкой, а <code>$numeric_ref</code> — число, также не связанное с ней.</p>
+
+            <h2>Структура скаляров</h2>
+            <p>Чтобы допускать преобразование без потери данных, скаляры Perl могут содержать одновременно числовое и строковое представление. Внутренняя структура скаляра содержит два слота: числовой и строковый. Доступ к строке в числовом контексте создаёт скаляр с обоими значениями.</p>
+
+            <p>Скаляры не имеют отдельного слота для булевых значений. В булевом контексте пустая строка (<code>''</code>) и строка <code>'0'</code> считаются ложными. Все остальные строки — истинными. Числа 0, 0.0 и 0e0 — ложны. Остальные числа — истинны.</p>
+
+            <h2>Что есть истина?</h2>
+            <p>Будьте внимательны: строки <code>'0.0'</code> и <code>'0e0'</code> считаются истинными. Это пример различия между тем, что выглядит как число, и тем, что им является. <code>undef</code> всегда считается ложным значением.</p>
+
+            <h2>Массивы</h2>
+            <p>Массив — агрегатный тип данных в Perl, способный хранить ноль или более скаляров. Элементы массива доступны по индексам и могут быть добавлены или удалены в любое время. Размер массива изменяется динамически.</p>
+            <p>Символ <code>@</code> обозначает массив. Объявление массива:</p>
+            <pre><code class="language-perl">
+my @items;
+            </code></pre>
+
+            <h2>Элементы массива</h2>
+            <p>Для доступа к элементу массива используется символ <code>$</code>. <code>$cats[0]</code> однозначно указывает на первый элемент массива <code>@cats</code>.</p>
+            <pre><code class="language-perl">
+# @cats содержит список объектов Cat
+my $first_cat = $cats[0];
+            </code></pre>
+
+            <p>Последний индекс массива зависит от количества элементов. В скалярном контексте (например, при присваивании, конкатенации, сложении или в булевом выражении) массив возвращает число элементов:</p>
+            <pre><code class="language-perl">
+# скалярное присваивание
+my $num_cats = @cats;
+
+# конкатенация строк
+say 'У меня ' . @cats . ' кошек!';
+
+# сложение
+my $num_animals = @cats + @dogs + @fish;
+
+# булев контекст
+say 'Да, я кошатник!' if @cats;
+            </code></pre>
+
+            <p>Для получения индекса последнего элемента массива можно вычесть 1 из общего количества или использовать синтаксис <code>$#cats</code>:</p>
+            <pre><code class="language-perl">
+my $first_index = 0;
+my $last_index = @cats - 1;
+# или
+# my $last_index = $#cats;
+say "У первого кота индекс $first_index, а у последнего — $last_index.";
+            </code></pre>
+            <p>Часто важна не абсолютная, а относительная позиция элемента массива. Чтобы обратиться к элементам с конца массива, используйте отрицательные индексы: -1 — это последний элемент, -2 — предпоследний и т. д.</p>
+            <pre><code class="language-perl">my $last_cat = $cats[-1];
+my $second_to_last_cat = $cats[-2];</code></pre>
+
+            <p>Оператор <code>$#</code> можно использовать для изменения размера массива "на месте":</p>
+            <p>Переменные массивов в Perl изменяемые: при уменьшении — обрезаются лишние элементы, при расширении — недостающие позиции заполняются <code>undef</code>.</p>
+
+            <h3>Присваивание массивам</h3>
+            <p>Присваивать значения можно напрямую по индексу:</p>
+            <pre><code class="language-perl">my @cats;
+$cats[3] = 'Jack';
+$cats[2] = 'Tuxedo';
+$cats[0] = 'Daisy';
+$cats[1] = 'Petunia';
+$cats[4] = 'Brad';
+$cats[5] = 'Choco';</code></pre>
+
+            <p>Если указать индекс за пределами текущего массива — Perl сам расширит массив и заполнит промежуточные элементы <code>undef</code>.</p>
+
+            <p>Сокращённая форма инициализации массива:</p>
+            <pre><code class="language-perl">my @cats = ( 'Daisy', 'Petunia', 'Tuxedo', ... );</code></pre>
+
+            <p>Важно: скобки действительно создают список. Без них — будет назначено только первое значение, остальные — проигнорированы.</p>
+
+            <p>Можно присваивать массивам любые выражения, возвращающие список:</p>
+            <pre><code class="language-perl">my @cats = get_cat_list();
+my @timeinfo = localtime();
+my @nums = 1 .. 10;</code></pre>
+
+            <p>Присваивание скалярному элементу массива навязывает скалярный контекст, а присваивание массиву — списковый.</p>
+
+            <p>Для очистки массива присвойте ему пустой список:</p>
+            <pre><code class="language-perl">@dates = ();</code></pre>
+
+            <p>Это редкий случай, когда скобки действительно указывают на список, и без них код был бы неясен.</p>
+
+            <h3>Операции с массивами</h3>
+            <p>Иногда удобнее использовать массив как упорядоченную изменяемую коллекцию. Perl предлагает несколько операций для работы с элементами.</p>
+
+            <p><code>push</code> и <code>pop</code> добавляют и удаляют элементы с конца массива:</p>
+            <pre><code class="language-perl">my @meals;
+push @meals, qw( hamburgers pizza lasagna turnip );
+pop @meals;</code></pre>
+
+            <p><code>push</code> возвращает новое количество элементов, <code>pop</code> — удалённый элемент.</p>
+
+            <p>Можно легко объединить несколько массивов:</p>
+            <pre><code class="language-perl">push @meals, @breakfast, @lunch, @dinner;</code></pre>
+
+            <p><code>unshift</code> и <code>shift</code> работают с началом массива — добавляют и удаляют элементы соответственно:</p>
+            <pre><code class="language-perl">unshift @meals, qw( tofu spanakopita taquitos );
+shift @meals;</code></pre>
+
+            <p>Возвращаемые значения <code>unshift</code> и <code>shift</code> редко используются.</p>
+
+            <p><code>splice</code> позволяет удалять и заменять элементы массива, начиная с заданной позиции и количества:</p>
+            <pre><code class="language-perl">my ($winner, $runnerup) = splice @finalists, 0, 2;
+# или
+my $winner = shift @finalists;
+my $runnerup = shift @finalists;</code></pre>
+
+            <p><code>each</code> позволяет перебирать массив по индексам и значениям...</p>
+            <p><strong>Срезы массивов (Array Slices)</strong></p>
+
+            <pre><code class="language-perl">my @youngest_cats = @cats[-1, -2];
+my @oldest_cats = @cats[0 .. 2];</code></pre>
+            
+            <p>Срезы массивов позволяют выбрать несколько элементов через их индексы. Например:</p>
+            <ul>
+                <li><em>@cats[-1, -2]</em>: последние два кота.</li>
+                <li><em>@cats[0..2]</em>: первые три элемента (индексы 0-2).</li>
+            </ul>
+
+            <pre><code class="language-perl">@users[@replace_indices] = @replace_users;</code></pre>
+            
+            <p>Обратите внимание: срез массива требует <strong>списочного контекста</strong>. Использование скалярного контекста вызовет предупреждение:</p>
+
+            <blockquote>
+                Scalar value @cats[1] better written as $cats[1]...
+            </blockquote>
+
+            <h3>Массивы и контекст (Arrays and Context)</h3>
+
+            <pre><code class="language-perl">take_pets_to_vet( @cats, @dogs );
+sub take_pets_to_vet {
+    my (@cats, @dogs) = @_;
+}</code></pre>
+            
+            <p>В этом примере массивы расплющиваются в один список. Функция получит все элементы как 9 отдельных переменных.</p>
+
+            <h3>Интерполяция массивов (Array Interpolation)</h3>
+            
+            <pre><code class="language-perl">say "Pets: @pets";</code></pre>
+            
+            <p>Массив интерполируется как строка, разделённая пробелами. Для изменения разделителя используйте глобальную переменную $" (по умолчанию — пробел):</p>
+
+            <pre><code class="language-perl">${"Список: @pets". $LIST_SEPARATOR = " / ";</code></pre>
+            
+            <h4>Важно:</h4>
+            <ul>
+                <li>Массивы в списке всегда расплющиваются.</li>
+                <li>Чтобы сохранить структуру, используйте ссылки на массивы (array references).</li>
+            </ul>
+
+            <pre><code class="language-perl"># ПЛОХО: создает плоский список
+my @numbers = (1..10, (11..20), 21..30);
+
+# ХОРОШО: массив ссылок на массивы
+my $nested_arrays = [ [1..10], [11..20], [21..30] ];</code></pre>
+<p>В этом примере переменная <code>$name</code> содержит строку, которая также является ключом хэша. Как и при доступе к отдельному элементу массива, сигил изменяется с <code>%</code> на <code>$</code> для обозначения обращения к скалярному значению по ключу.</p>
+
+<pre><code class="language-perl">my $address = $addresses{$name};</code></pre>
+
+            <p>Вы можете использовать строковые литералы в качестве ключей хэша. Perl автоматически заключает в кавычки bareword-значения по тем же правилам, что и при использовании «толстых» запятых:</p>
+
+<pre><code class="language-perl"># автоматически заключено в кавычки
+my $address = $addresses{Victor};
+# требует кавычек — невалидный bareword
+my $address = $addresses{'Sue-Linn'};
+# вызов функции требует уточнения
+my $address = $addresses{get_name()};</code></pre>
+
+            <h2>Не цитируйте меня</h2>
+            <p>Новички часто всегда заключают строковые ключи в кавычки, но опытные разработчики избегают этого, когда можно. Тогда наличие кавычек может указывать на то, что вы делаете что-то необычное намеренно.</p>
+
+            <p>Даже встроенные функции Perl подвержены автокавычкам:</p>
+
+<pre><code class="language-perl">my %addresses = (
+    Leonardo => '1123 Fib Place',
+    Utako => 'Cantor Hotel, Room 1',
+    sub get_address_from_name {
+        return $addresses{+shift};
+    }
+);</code></pre>
+
+            <p>Унарный плюс превращает то, что иначе было бы bareword-значением (<code>shift</code>), в выражение. Это значит, что вы можете использовать любое выражение — не только вызов функции — в качестве ключа хэша:</p>
+
+<pre><code class="language-perl"># так делать не стоит, но можно
+my $address = $addresses{reverse 'odranoeL'};
+# интерполяция работает
+my $address = $addresses{"$first_name $last_name"};
+# также работают вызовы методов
+my $address = $addresses{ $user-&gt;name };</code></pre>
+
+            <p>Ключи хэша могут быть только строками. Всё, что приводится к строке, допустимо. Perl даже приводит выражения к строке, если это необходимо. Например, если использовать объект в качестве ключа хэша, Perl сохранит его строковое представление:</p>
+
+<pre><code class="language-perl">for my $isbn (@isbns) {
+    my $book = Book->fetch_by_isbn($isbn);
+    # скорее всего, не то что вы хотите
+    $books{$book} = $book->price;
+}</code></pre>
+
+            <p>Такой ключ будет выглядеть как <code>Book=HASH(0x222d148)</code>. <code>Book</code> — имя класса, <code>HASH</code> указывает на то, что это объект, а <code>0x222d148</code> — адрес структуры данных в памяти.</p>
+
+            <h2>Проверка существования ключа</h2>
+            <p>Оператор <code>exists</code> возвращает логическое значение, показывающее, содержится ли ключ в хэше:</p>
+
+<pre><code class="language-perl">my %addresses = (
+    Leonardo => '1123 Fib Place',
+    Utako => 'Cantor Hotel, Room 1',
+);
+say "Есть адрес Леонардо" if exists $addresses{Leonardo};
+say "Есть адрес Уорни" if exists $addresses{Warnie};</code></pre>
+
+            <p>Использование <code>exists</code> вместо прямого доступа к значению по ключу позволяет избежать двух проблем. Во-первых, это не проверяет значение на истинность — ключ может существовать, даже если его значение ложно (включая <code>undef</code>):</p>
+
+<pre><code class="language-perl">my %false_key_value = ( 0 => '' );
+ok %false_key_value, 'хэш с ложным ключом и значением должен быть true';</code></pre>
+
+            <p>Во-вторых, <code>exists</code> предотвращает автосоздание вложенных структур (автовивификацию):</p>
+
+<pre><code class="language-perl">$addresses{Leibniz} = undef;
+say "Готфрид живёт по адресу $addresses{Leibniz}"
+    if exists $addresses{Leibniz}
+    && defined $addresses{Leibniz};</code></pre>
+
+            <h2>Доступ к ключам и значениям хэша</h2>
+            <p>Хэши — агрегатные переменные, но их парная структура уникальна. Perl позволяет итерироваться по ключам, значениям или парам ключ/значение.</p>
+
+            <p>Оператор <code>keys</code> возвращает список ключей:</p>
+
+<pre><code class="language-perl">for my $addressee (keys %addresses) {
+    say "Найден адрес для $addressee!";
+}</code></pre>
+
+            <p>Оператор <code>values</code> — список значений:</p>
+
+<pre><code class="language-perl">for my $address (values %addresses) {
+    say "Кто-то живёт по адресу $address";
+}</code></pre>
+
+            <p>Оператор <code>each</code> возвращает пары ключ/значение:</p>
+
+<pre><code class="language-perl">while (my ($addressee, $address) = each %addresses) {
+    say "$addressee живёт по адресу $address";
+}</code></pre>
+
+            <p>В отличие от массивов, порядок элементов хэша не гарантируется — он зависит от реализации Perl, размера хэша и случайного фактора. Однако, порядок согласован между <code>keys</code>, <code>values</code> и <code>each</code>. Изменение хэша может повлиять на порядок.</p>
+            <p>Порядок обхода можно использовать, если хеш остаётся неизменным. Однако даже при совпадении ключей и значений у двух хешей нельзя полагаться на одинаковый порядок обхода: они могли быть сконструированы по-разному или изменены (удаление элементов и т.п.). Начиная с Perl 5.18, даже при одинаковой сборке хешей порядок обхода между ними может отличаться.<br><br>  
+                Перечитайте предыдущий абзац ещё раз. Это действительно важно.<br><br>  
+                У каждого хеша есть только один итератор для оператора <code>each</code>. Нельзя безопасно перебирать один и тот же хеш с помощью <code>each</code> одновременно в двух местах: если начнётся новый проход, старый завершится преждевременно, а новый начнётся с середины.<br><br>  
+                Старайтесь не вызывать функции, которые могут сами начать обход хеша через <code>each</code>. Это редко становится проблемой, но отладка будет неприятной. Сбросить итератор можно, вызвав <code>keys</code> или <code>values</code> без использования результата:</p>
+    
+                <pre><code class="language-perl"># сброс итератора хеша
+    keys %addresses;
+    while (my ($addressee, $address) = each %addresses) {
+        ...
+    }</code></pre>
+    
+                <p><strong>Срезы хеша</strong><br><br>
+                Срез хеша — это список элементов, извлечённых по нескольким ключам за одну операцию. Например, чтобы инициализировать несколько элементов сразу:</p>
+    
+                <pre><code class="language-perl">my %cats;
+    @cats{qw( Jack Brad Mars Grumpy )} = (1) x 4;</code></pre>
+    
+                <p>Это эквивалентно следующей записи:</p>
+    
+                <pre><code class="language-perl">my %cats = map { $_ =&gt; 1 } qw( Jack Brad Mars Grumpy );</code></pre>
+    
+                <p>Обрати внимание: присваивание через срез может как перезаписывать, так и дополнять существующий хеш.<br><br>  
+                Срезы позволяют за один раз извлечь несколько значений из хеша. Как и в случае с массивами, символ меняется на <code>@</code> для указания работы в списочном контексте. Фигурные скобки указывают, что идёт доступ к хешу:</p>
+    
+                <pre><code class="language-perl">my @buyer_addresses = @addresses{ @buyers };</code></pre>
+    
+                <p>Срезы удобны для объединения хешей:</p>
+    
+                <pre><code class="language-perl">my %addresses = ( ... );
+    my %canada_addresses = ( ... );
+    @addresses{ keys %canada_addresses } = values %canada_addresses;</code></pre>
+    
+                <p>Это аналогично ручному перебору содержимого <code>%canada_addresses</code>, но гораздо короче.<br><br>  
+                Важно: здесь порядок ключей и значений должен совпадать. Perl гарантирует это, но только если между операциями <code>keys</code> и <code>values</code> хеш не изменяется.<br><br>  
+                Что если один и тот же ключ есть в обоих хешах? Тогда срез всегда перезапишет значение в <code>%addresses</code>. Если нужно другое поведение, стоит использовать обычный цикл.</p>
+                <h2>Пустой хеш</h2>
+                <p>Пустой хеш не содержит ни ключей, ни значений. В булевом контексте он оценивается как ложь. Хеш, содержащий хотя бы одну пару ключ/значение, оценивается как истина, даже если сами ключи или значения (или и то, и другое) в булевом контексте являются ложными.</p>
+                <pre><code class="language-perl">
+    use Test::More;
+    my %empty;
+    ok ! %empty, 'empty hash should evaluate false';
+    my %false_key = ( 0 => 'true value' );
+    ok %false_key, 'hash containing false key should evaluate to true';
+    my %false_value = ( 'true key' => 0 );
+    ok %false_value, 'hash containing false value should evaluate to true';
+    done_testing();
+                </code></pre>
+                <p>В скалярном контексте хеш оценивается как строка, представляющая собой внутренние детали реализации (например, отношение заполненных бакетов), которые можно игнорировать. В булевом скалярном контексте эта строка интерпретируется как ложь.</p>
+                <p>В списковом контексте хеш разворачивается в список пар ключ/значение, аналогичный тому, что выдаёт оператор <code>each</code>. Но итерироваться по такому списку через <code>while</code> нельзя: это приведёт к бесконечному циклу:</p>
+                <pre><code class="language-perl">
+    # бесконечный цикл для непустого хеша
+    while (my ($key, $value) = %hash) {
+        ...
+    }
+                </code></pre>
+                <p>Итерироваться по списку ключей и значений можно через <code>for</code>, но тогда переменная будет принимать поочерёдно ключ, затем значение, потому что Perl "сплющит" хеш в один список.</p>
+    
+                <h2>Идиомы работы с хешами</h2>
+                <p>Поскольку каждый ключ в хеше существует только один раз, при многократном присваивании одного и того же ключа сохраняется последнее значение. Это удобно, например, для поиска уникальных элементов списка:</p>
+                <pre><code class="language-perl">
+    my %uniq;
+    undef @uniq{ @items };
+    my @uniques = keys %uniq;
+                </code></pre>
+                <p>Использование <code>undef</code> на срезе хеша устанавливает значения в <code>undef</code>. Это самый дешёвый способ выполнять операции над множествами.</p>
+    
+                <p>Хеши также полезны для подсчёта элементов, например, IP-адресов в логах:</p>
+                <pre><code class="language-perl">
+    my %ip_addresses;
+    while (my $line = &lt;$logfile&gt;) {
+        chomp $line;
+        my ($ip, $resource) = analyze_line( $line );
+        $ip_addresses{$ip}++;
+        ...
+    }
+                </code></pre>
+                <p>Начальное значение для элемента хеша — <code>undef</code>. Оператор <code>++</code> рассматривает его как ноль. Таким образом, если значение отсутствует, оно создаётся (как <code>undef</code>) и сразу увеличивается до одного.</p>
+    
+                <p>Эта стратегия также подходит для кэширования дорогостоящих операций:</p>
+                <pre><code class="language-perl">
+    {
+        my %user_cache;
+        sub fetch_user {
+            my $id = shift;
+            $user_cache{$id} //= create_user($id);
+            return $user_cache{$id};
+        }
+    }
+                </code></pre>
+                <p>Этот "оркский манёвр" (or-cache) возвращает значение из хеша, если оно есть, иначе вычисляет его, сохраняет и возвращает. Оператор <code>//=</code> присваивает значение правому операнду только если левый операнд неопределён.</p>
+                <p>Ранее для этой задачи использовали оператор <code>||=</code>, но <code>//=</code> предпочтительнее, так как проверяет определённость, а не истинность значения.</p>
+                <p>Если функция принимает несколько аргументов, используйте "проглатывающий" хеш (Slurping, стр. 109), чтобы собрать пары ключ/значение в один хеш в качестве именованных аргументов функции:</p>
+                <pre><code class="language-perl">sub make_sundae {
+        my %parameters = @_;
+        ...
+    }
+    
+    make_sundae(
+        flavor  =&gt; 'Lemon Burst',
+        topping =&gt; 'cookie bits'
+    );</code></pre>
+    
+                <p>Такой подход позволяет установить значения по умолчанию:</p>
+                <pre><code class="language-perl">sub make_sundae {
+        my %parameters = @_;
+        $parameters{flavor}    //= 'Vanilla';
+        $parameters{topping}   //= 'fudge';
+        $parameters{sprinkles} //= 100;
+        ...
+    }</code></pre>
+    
+                <p>Или сразу задать их при инициализации хеша — поздние присваивания имеют приоритет над ранними:</p>
+                <pre><code class="language-perl">sub make_sundae {
+        my %parameters = (
+            flavor    =&gt; 'Vanilla',
+            topping   =&gt; 'fudge',
+            sprinkles =&gt; 100,
+            @_,
+        );
+        ...
+    }</code></pre>
+    
+                <h2>Блокировка хешей</h2>
+                <p>Так как ключи хеша — это "голые слова", они плохо защищены от опечаток по сравнению с именами функций и переменных при использовании `strict`. Слабоизвестный модуль ядра <code>Hash::Util</code> помогает сделать хеши безопаснее.</p>
+                <p>Чтобы предотвратить случайное добавление лишнего ключа (через опечатку или недоверенный ввод), используйте функцию <code>lock_keys()</code>, чтобы ограничить хеш его текущими ключами. Любая попытка добавить новый ключ вызовет исключение. Аналогично можно заблокировать или разблокировать конкретное значение ключа (<code>lock_value()</code> и <code>unlock_value()</code>) и сделать весь хеш только для чтения или снова доступным для записи (<code>lock_hash()</code> и <code>unlock_hash()</code>).</p>
+                <p>Это не строгая безопасность — любой может обойти её с помощью разблокировки, но она хорошо защищает от опечаток и случайных ошибок.</p>
+    
+                <h2>Приведение типов</h2>
+                <p>В течение жизни переменной Perl может содержать значения разных типов — строки, числа, рациональные числа и так далее. Вместо жесткой типизации Perl полагается на контекст операторов (числовой, строковый и булевый контексты, стр. 7), чтобы определить, как обрабатывать значения. По замыслу Perl старается "делать то, что вы имели в виду" — это называют DWIM (Do What I Mean), но при этом требуется точность намерений. Если вы обращаетесь к значению как к строке, Perl постарается привести его к строке.</p>
+    
+                <h3>Булево приведение</h3>
+                <p>Булево приведение происходит, когда вы проверяете значение на истинность, например, в условиях <code>if</code> или <code>while</code>. Числовой ноль, <code>undef</code>, пустая строка и строка <code>'0'</code> считаются ложными. Все остальные значения — включая строки вроде <code>'0.0'</code>, <code>'0e'</code> и <code>'0 but true'</code> — считаются истинными.</p>
+                <p>Когда скаляр имеет и строковую, и числовую части (Dualvars, стр. 75), Perl предпочитает проверять строковую часть для булевой проверки. Строка <code>'0 but true'</code> численно равна нулю, но не является пустой строкой, поэтому считается истинной в булевом контексте.</p>
+                <h2>Приведение типов в строки</h2>
+                <p>Приведение к строке происходит при использовании строковых операторов, таких как сравнения (<code>eq</code> и <code>cmp</code>), конкатенация, <code>split</code>, <code>substr</code> и регулярные выражения, а также при использовании значения или выражения в качестве ключа хеша. Неопределённое значение превращается в пустую строку, но вызывает предупреждение "использование неинициализированного значения". Числа приводятся к строкам, содержащим их значения: например, число 10 превращается в строку "10". Можно даже разбить число на отдельные цифры:</p>
+                <pre><code class="language-perl">my @digits = split '', 1234567890;</code></pre>
+    
+                <h2>Приведение к числам</h2>
+                <p>Приведение к числу происходит при использовании числовых операторов сравнения (таких как <code>==</code> и <code>&lt;=&gt;</code>), при выполнении математических операций и при использовании значения или выражения в качестве индекса массива или списка. Неопределённое значение приводится к нулю и вызывает предупреждение "использование неинициализированного значения". Строки, не начинающиеся с числа, приводятся к нулю и вызывают предупреждение "аргумент не является числом". Строки, начинающиеся с допустимых для чисел символов, превращаются в соответствующие значения без предупреждений. Например:</p>
+                <ul>
+                    <li>"10 leptons leaping" превращается в 10</li>
+                    <li>"6.022e23 moles marauding" превращается в 6.022e23</li>
+                </ul>
+                <p>Модуль ядра <code>Scalar::Util</code> содержит функцию <code>looks_like_number()</code>, которая использует те же правила, что и парсер Perl, для извлечения числа из строки.</p>
+    
+                <h2>Радость математиков</h2>
+                <p>Строки <code>Inf</code> и <code>Infinity</code> представляют бесконечность и ведут себя как числа. Строка <code>NaN</code> представляет "не число". Их приведение не вызывает предупреждений о некорректных числах. Однако имейте в виду, что представление бесконечности и NaN может различаться на разных платформах; Perl обеспечивает внутреннюю согласованность, даже если платформа — нет.</p>
+    
+                <h2>Приведение ссылок</h2>
+                <p>При попытке разыменования не-ссылки Perl автоматически превращает значение в ссылку. Этот процесс называется автоживлением и полезен при работе с вложенными структурами данных:</p>
+                <pre><code class="language-perl">my %users;
+    $users{Brad}{id} = 228;
+    $users{Jack}{id} = 229;</code></pre>
+                <p>Хотя изначально хеш не содержал записей для Brad и Jack, Perl автоматически создал ссылки на вложенные хеши и присвоил им пары ключ/значение.</p>
+    
+                <h2>Кэшированное приведение</h2>
+                <p>Внутреннее представление значения в Perl хранит одновременно строковую и числовую форму. Приведение числа к строке не уничтожает числовое значение, а лишь добавляет строковую версию. Аналогично, приведение строки к числу добавляет числовую часть, не затрагивая строковую.</p>
+                <p>Некоторые операции Perl предпочитают одну форму над другой — например, булевы проверки используют строковое представление. Кэшированное приведение редко приводит к неожиданностям, но знание об этом может помочь в диагностике странных ситуаций.</p>
+    
+                <h2>Двойные переменные (Dualvars)</h2>
+                <p>Доступ к двойной природе значений Perl можно получить через модуль <code>Scalar::Util</code> и функцию <code>dualvar()</code>, которая позволяет отдельно управлять строковой и числовой частью значения:</p>
+                <pre><code class="language-perl">use Scalar::Util 'dualvar';
+    my $false_name = dualvar 0, 'Sparkles &amp; Blue';
+    say 'Булево истинно!' if !! $false_name;
+    say 'Числовое ложно!' unless 0 + $false_name;
+    say 'Строковое истинно!' if '' . $false_name;</code></pre>
+    <p><strong>Пакеты</strong><br>
+        Пространство имён в Perl ассоциирует и инкапсулирует различные именованные сущности. Это похоже на вашу фамилию или название бренда. В отличие от реального мира, пространство имён не подразумевает наличие прямой связи между сущностями — такие связи могут быть, но это не обязательно.<br><br>
+
+        Пакет в Perl — это набор кода в одном пространстве имён. Различие тонкое: пакет представляет исходный код, а пространство имён — внутреннюю структуру данных Perl для его группировки.<br><br>
+
+        Встроенная функция <code>package</code> объявляет пакет и пространство имён:
+        </p>
+
+        <pre><code class="language-perl">package MyCode;
+our @boxes;
+sub add_box { ... }</code></pre>
+
+        <p>Все глобальные переменные и функции, объявленные или использованные после <code>package</code>, относятся к символам в пространстве имён <code>MyCode</code>. Чтобы обратиться к переменной <code>@boxes</code> из пространства имён <code>main</code>, нужно использовать полное имя <code>@MyCode::boxes</code>. Полное имя включает имя пакета, поэтому функцию <code>add_box()</code> можно вызвать через <code>MyCode::add_box()</code>.<br><br>
+
+        Область действия пакета продолжается до следующего объявления <code>package</code> или до конца файла. Также можно ограничить область блока, используя фигурные скобки:
+        </p>
+
+        <pre><code class="language-perl">package Pinball::Wizard {
+our $VERSION = 1969;
+}</code></pre>
+
+        <p>Пакет по умолчанию — это пакет <code>main</code>. Без явного объявления пакета, весь код находится в <code>main</code>. Это правило применяется к однострочным командам, отдельным программам и даже к модулям (.pm файлам).<br><br>
+
+        Помимо имени, пакет имеет версию и три неявных метода: <code>import()</code> (см. "Импортирование"), <code>unimport()</code> и <code>VERSION()</code>. Метод <code>VERSION()</code> возвращает значение переменной <code>$VERSION</code> в пакете. По соглашению, версия состоит из целых чисел, разделённых точками, например 1.23 или 1.1.10.<br><br>
+
+        Perl поддерживает более строгий формат версий, описанный в <code>perldoc version::Internals</code>, где версия должна начинаться с символа <code>v</code> и содержать как минимум три числа:
+        </p>
+
+        <pre><code class="language-perl">package MyCode v1.2.1;</code></pre>
+
+        <p>В сочетании с блочной формой записи можно написать:
+        </p>
+
+        <pre><code class="language-perl">package Pinball::Wizard v1969.3.7 { ... }</code></pre>
+
+        <p>Чаще встречается более старый стиль:
+        </p>
+
+        <pre><code class="language-perl">package MyCode;
+our $VERSION = 1.21;</code></pre>
+
+        <p>Каждый пакет наследует метод <code>VERSION()</code> от базового класса <code>UNIVERSAL</code>. Этот метод возвращает значение <code>$VERSION</code>:
+        </p>
+
+        <pre><code class="language-perl">my $version = Some::Plugin->VERSION;</code></pre>
+
+        <p>Если передать аргумент, метод <code>VERSION()</code> выбросит исключение, если версия модуля меньше указанной:
+        </p>
+
+        <pre><code class="language-perl"># требуется версия не ниже 2.1
+Some::Plugin->VERSION(2.1);
+die "Your plugin $version is too old" unless $version > 2;</code></pre>
+
+        <p>Вы можете переопределить <code>VERSION()</code>, но для этого редко бывают веские причины.</p>
+        <h2>Пакеты и пространства имён</h2>
+            <p>Каждая директива <code>package</code> создаёт новое пространство имён, если это необходимо. После разбора директивы Perl сохраняет все последующие глобальные символы пакета (глобальные переменные и функции) в этом пространстве.</p>
+            <p>В Perl пространства имён открытые. Вы можете добавлять функции или переменные в пространство имён в любой момент — либо через новую директиву <code>package</code>:</p>
+            <pre><code class="language-perl">package Pack {
+    sub first_sub { ... }
+}
+Pack::first_sub();
+package Pack {
+    sub second_sub { ... }
+}
+Pack::second_sub();</code></pre>
+            <p>...или с помощью полностью квалифицированных имён функций:</p>
+            <pre><code class="language-perl"># неявно
+package main;
+sub Pack::third_sub { ... }</code></pre>
+            <p>Вы можете добавлять код в пакет в любой момент компиляции или выполнения программы, независимо от файла. Однако построение пакета из нескольких объявлений в разных файлах может затруднить понимание кода.</p>
+            <p>Пространства имён могут иметь сколько угодно уровней в зависимости от вашей структуры, но они не являются иерархическими. Единственная связь между пакетами — семантическая, а не техническая.</p>
+            <p>Многие проекты создают свои собственные пространства имён верхнего уровня, чтобы избежать глобальных конфликтов и организовать код на диске. Например:</p>
+            <ul>
+                <li><strong>StrangeMonkey</strong> — имя проекта</li>
+                <li><strong>StrangeMonkey::UI</strong> — код пользовательского интерфейса</li>
+                <li><strong>StrangeMonkey::Persistence</strong> — код для работы с данными</li>
+                <li><strong>StrangeMonkey::Test</strong> — код для тестирования проекта</li>
+            </ul>
+            <p>Это лишь соглашение, но весьма полезное.</p>
+
+            <h2>Ссылки</h2>
+            <p>Perl обычно ведёт себя так, как вы ожидаете, даже если это поведение тонкое. Рассмотрим передачу значений в функции:</p>
+            <pre><code class="language-perl">sub reverse_greeting {
+    my $name = reverse shift;
+    return "Hello, $name!";
+}
+my $name = 'Chuck';
+say reverse_greeting( $name );
+say $name;</code></pre>
+            <p>Вне функции переменная <code>$name</code> по-прежнему содержит <code>Chuck</code>, хотя переданное внутрь функции значение переворачивается в <code>kcuhC</code>. Это ожидаемо: значение <code>$name</code> снаружи функции и внутри — разные.</p>
+            <p>Иначе вам пришлось бы вручную копировать каждое значение перед его изменением, что привело бы к излишней защите кода.</p>
+            <p>Иногда полезно изменять значения на месте. Например, если вы хотите передать хэш в функцию для изменения, создание и возврат нового хэша каждый раз было бы утомительным и неэффективным (если только компилятор не обладает чудесной оптимизацией).</p>
+            <p>Perl предлагает механизм ссылок, которые позволяют изменять оригинальное значение без создания копии. Все ссылки на это значение будут видеть обновлённые данные. Ссылка в Perl — это полноценная скалярная переменная, которая указывает на другую полноценную переменную.</p>
+            <h2>Ссылки на скаляры</h2>
+            <p>Оператор ссылки — обратный слэш (<code>\</code>). В скалярном контексте он создаёт одну ссылку на значение. В списочном контексте — список ссылок. Чтобы создать ссылку на переменную <code>$name</code>:</p>
+            <pre><code class="language-perl">
+my $name = 'Larry';
+my $name_ref = \$name;
+            </code></pre>
+            <p>Чтобы получить значение, на которое указывает ссылка, нужно разыменовать её, добавив дополнительный сигил для каждого уровня разыменования:</p>
+            <pre><code class="language-perl">
+sub reverse_in_place {
+    my $name_ref = shift;
+    $$name_ref = reverse $$name_ref;
+}
+
+my $name = 'Blabby';
+reverse_in_place( \$name );
+say $name;
+            </code></pre>
+            <p>Двойной знак доллара <code>$$</code> разыменовывает скалярную ссылку.</p>
+            <p>Параметры в массиве <code>@_</code> ведут себя как псевдонимы переменных вызывающего кода, так что можно изменять их на месте:</p>
+            <pre><code class="language-perl">
+sub reverse_value_in_place {
+    $_[0] = reverse $_[0];
+}
+
+my $name = 'allizocohC';
+reverse_value_in_place( $name );
+say $name;
+            </code></pre>
+            <p>Обычно не стоит так делать — вызывающий код редко ожидает изменения своих аргументов. Чтобы избежать такого поведения, присваивайте параметры локальным переменным внутри функций — это создаёт их копии.</p>
+
+            <h2>Экономия памяти при помощи ссылок</h2>
+            <p>Изменение значений на месте или возврат ссылки на скаляр может сэкономить память. Поскольку Perl копирует значения при присваивании, могут появляться множественные копии одной и той же строки. Работа со ссылками приводит лишь к копированию самих ссылок — это гораздо дешевле. Однако перед изменением кода для работы только с ссылками стоит замерить, будет ли это иметь реальное значение.</p>
+
+            <p>Сложные ссылки могут требовать использования фигурных скобок для уточнения частей выражения. Эта запись всегда допустима и иногда повышает читаемость, а иногда — наоборот:</p>
+            <pre><code class="language-perl">
+sub reverse_in_place {
+    my $name_ref = shift;
+    ${ $name_ref } = reverse ${ $name_ref };
+}
+            </code></pre>
+
+            <p>Если забыть разыменовать скалярную ссылку, Perl, скорее всего, преобразует её в строку вида <code>SCALAR(0x93339e8)</code> или в числовое значение <code>0x93339e8</code>. Это указывает на тип ссылки и её адрес в памяти (но напрямую с этим адресом ничего сделать нельзя).</p>
+
+            <h2>Ссылки — это не указатели</h2>
+            <p>Perl не даёт прямого доступа к памяти. Адрес ссылки — это лишь идентификатор. В отличие от указателей в C, нельзя изменить адрес ссылки или использовать его как настоящий адрес в памяти. Хотя адреса ссылок обычно уникальны, Perl может переиспользовать области памяти после освобождения ресурсов.</p>
+            <p>Ссылки на массивы полезны в нескольких случаях:</p>
+            <ul>
+                <li>Для передачи и возврата массивов из функций без их расплющивания в список</li>
+                <li>Для создания многомерных структур данных</li>
+                <li>Чтобы избежать лишнего копирования массивов</li>
+                <li>Для хранения анонимных структур данных</li>
+            </ul>
+            <p>Используйте оператор ссылки для создания ссылки на объявленный массив:</p>
+            <pre><code class="language-perl">my @cards = qw( K Q J 10 9 8 7 6 5 4 3 2 A );
+my $cards_ref = \@cards;</code></pre>
+            <p>Любые изменения через <code>$cards_ref</code> изменяют <code>@cards</code> и наоборот.</p>
+            <p>Доступ ко всему массиву с помощью символа <code>@</code>:</p>
+            <pre><code class="language-perl">my $card_count = @$cards_ref;
+my @card_copy = @$cards_ref;</code></pre>
+            <p>Доступ к отдельным элементам через оператор <code>-></code>:</p>
+            <pre><code class="language-perl">my $first_card = $cards_ref-&gt;[0];
+my $last_card = $cards_ref-&gt;[-1];</code></pre>
+            <p>Альтернативный (но менее читаемый) способ:</p>
+            <pre><code class="language-perl">my $first_card = $$cards_ref[0];</code></pre>
+            <p>Для извлечения среза массива через ссылку используйте фигурные скобки:</p>
+            <pre><code class="language-perl">my @high_cards = @{ $cards_ref }[0 .. 2, -1];</code></pre>
+            <p>Создание анонимного массива:</p>
+            <pre><code class="language-perl">my $suits_ref = [qw( Monkeys Robots Dinos Cheese )];</code></pre>
+            <p>Пример отличия обычной и анонимной ссылки на массив:</p>
+            <pre><code class="language-perl">my @meals = qw( soup sandwiches pizza );
+my $sunday_ref = \@meals;
+my $monday_ref = \@meals;
+push @meals, 'ice cream sundae';</code></pre>
+            <p>Обе ссылки увидят изменения. А при использовании анонимных массивов:</p>
+            <pre><code class="language-perl">my @meals = qw( soup sandwiches pizza );
+my $sunday_ref = [ @meals ];
+my $monday_ref = [ @meals ];
+push @meals, 'berry pie';</code></pre>
+            <p>Ссылки останутся неизменными.</p>
+
+            <h2>Ссылки на хэши</h2>
+            <p>Создание ссылки на хэш:</p>
+            <pre><code class="language-perl">my %colors = (
+    blue =&gt; 'azul',
+    gold =&gt; 'dorado',
+    red =&gt; 'rojo',
+    yellow =&gt; 'amarillo',
+    purple =&gt; 'morado',
+);
+my $colors_ref = \%colors;</code></pre>
+            <p>Доступ к ключам и значениям:</p>
+            <pre><code class="language-perl">my @english_colors = keys %$colors_ref;
+my @spanish_colors = values %$colors_ref;</code></pre>
+            <p>Доступ к отдельным значениям:</p>
+            <pre><code class="language-perl">sub translate_to_spanish {
+    my $color = shift;
+    return $colors_ref-&gt;{$color};
+    # или return $$colors_ref{$color};
+}</code></pre>
+            <p>Извлечение среза из хэша по ссылке:</p>
+            <pre><code class="language-perl">my @colors = qw( red blue green );
+my @colores = @{ $colors_ref }{@colors};</code></pre>
+            <p>Создание анонимного хэша:</p>
+            <pre><code class="language-perl">my $food_ref = {
+    'birthday cake' =&gt; 'la torta de cumpleaños',
+    candy =&gt; 'dulces',
+    cupcake =&gt; 'bizcochito',
+    'ice cream' =&gt; 'helado',
+};</code></pre>
+            <p><strong>Внимание!</strong> Новички часто путают анонимные хэши и обычные. Для обычного хэша используйте круглые скобки <code>()</code>, для анонимного — фигурные <code>{}</code>.</p>
+            <h2>Ссылки на функции</h2>
+            <p>Perl поддерживает функции как полноценные значения, подобно массивам и хэшам. Это означает поддержку ссылок на функции, что позволяет использовать продвинутые техники (например, замыкания).</p>
+            <p>Создание ссылки на именованную функцию:</p>
+            <pre><code class="language-perl">sub bake_cake { say 'Baking a wonderful cake!' };
+my $cake_ref = \&amp;bake_cake;</code></pre>
+            <p>Без знака <code>&amp;</code> будет взята ссылка на возвращаемое значение функции, а не на саму функцию.</p>
+            <p>Создание анонимной функции:</p>
+            <pre><code class="language-perl">my $pie_ref = sub { say 'Making a delicious pie!' };</code></pre>
+            <p>Анонимная функция компилируется, но не регистрируется в пространстве имён. Доступ возможен только через ссылку.</p>
+            <p>Вызов ссылки на функцию через оператор стрелки:</p>
+            <pre><code class="language-perl">$cake_ref-&gt;();
+$pie_ref-&gt;();</code></pre>
+            <h3>Вызов в стиле Perl 4</h3>
+            <p>Можно вызывать функцию через <code>&amp;</code> вместо стрелки, например <code>&amp;$cupcake_ref()</code>, но так делать не рекомендуется из-за особенностей разбора аргументов.</p>
+            <p>Передача аргументов в функцию через скобки:</p>
+            <pre><code class="language-perl">$bake_something_ref-&gt;( 'cupcakes' );</code></pre>
+            <p>Ссылки на функции можно использовать как методы для объектов:</p>
+            <pre><code class="language-perl">my $clean = $robot_maid-&gt;can( 'cleanup' );
+$robot_maid-&gt;$clean( $kitchen );</code></pre>
+
+            <h2>Ссылки на файловые дескрипторы</h2>
+            <p>Лексические файловые дескрипторы (формы <code>open</code> и <code>opendir</code>) работают через ссылки. Они являются объектами класса <code>IO::File</code> и позволяют напрямую вызывать методы:</p>
+            <pre><code class="language-perl">use autodie 'open';
+open my $out_fh, '&gt;', 'output_file.txt';
+$out_fh-&gt;say( 'Have some text!' );</code></pre>
+            <p>Старый код может использовать <code>IO::Handle</code> или ссылки на глобальные дескрипторы через typeglob:</p>
+            <pre><code class="language-perl">local *FH;
+open FH, "&gt; $file" or die "Can't write '$file': $!";
+my $fh = \*FH;</code></pre>
+            <p>Современный подход — использовать лексические файловые дескрипторы, которые автоматически закрываются при выходе из области видимости.</p>
+
+            <h2>Счётчики ссылок</h2>
+            <p>Perl управляет памятью через подсчёт ссылок. Каждый раз при создании новой ссылки счётчик увеличивается, при уничтожении ссылки — уменьшается. Когда счётчик достигает нуля, значение освобождается.</p>
+            <p>Пример работы счётчика ссылок с файловым дескриптором в области видимости:</p>
+            <pre><code class="language-perl">say 'file not open';
+{
+    open my $fh, '&gt;', 'inner_scope.txt';
+    $fh-&gt;say( 'file open here' );
+}
+say 'file closed here';</code></pre>
+            <p>Когда блок завершается, переменная <code>$fh</code> уничтожается, файловый дескриптор автоматически закрывается.</p>
+            <p><strong>Важно:</strong> Нужно понимать, что работа с ссылками напрямую влияет на управление памятью Perl (особенно при изучении циклических ссылок).</p>
+            <h2>Ссылки и функции</h2>
+            <p>Если вы передаёте ссылки в качестве аргументов функций, тщательно документируйте свои намерения. Модификация содержимого ссылки внутри функции может неожиданно изменить данные вызывающего кода.</p>
+            <p>Чтобы изменить данные, но не саму ссылку, сделайте копию:</p>
+            <pre><code class="language-perl">my @new_array = @{ $array_ref };
+my %new_hash = %{ $hash_ref };</code></pre>
+            <p>Это нужно не всегда, но явное клонирование помогает избежать неожиданных эффектов. Для вложенных структур можно использовать модуль <code>Storable</code> и его функцию <code>dclone</code> для глубокого копирования.</p>
+
+            <h2>Постфиксная разыменовка</h2>
+            <p>Начиная с Perl 5.20 (стабилизировано в 5.24), введена постфиксная разыменовка. Она позволяет читать выражение слева направо, без префиксов или фигурных скобок.</p>
+            <p>Пример для массива, используя символ массива <code>@*</code>:</p>
+            <pre><code class="language-perl">my $recipients = [qw(
+    Mother
+    Father
+    Partner
+    Nephew
+    Niece
+    Neighbor
+)];
+for my $recipient ($recipients-&gt;@*) {
+    say "Need to find a gift for $recipient";
+}</code></pre>
+            <p>Это особенно полезно для сложных структур данных:</p>
+            <pre><code class="language-perl">my %recipients = (
+    mandatory =&gt; [qw(Partner Nephew Niece)],
+    optional =&gt; [qw(Mother Father)],
+    mmmmmmmaybe =&gt; [qw(Neighbor)],
+);
+for my $recipient ($recipients{optional}-&gt;@*) {
+    say "Probably should find a gift for $recipient";
+}</code></pre>
+            <p>Или при работе с результатами функций/методов:</p>
+            <pre><code class="language-perl">say "Have \$200 to spend on " . join ', ',
+    get_recipients_for_budget({ usd =&gt; 200 })-&gt;@*;</code></pre>
+
+            <p>Для хэшей используется аналогичная нотация с символом <code>%*</code>:</p>
+            <pre><code class="language-perl">my $holiday_starts = {
+    Hannukah =&gt; '2020-12-10',
+    Christmas =&gt; '2020-12-25',
+    Kwanzaa =&gt; '2020-12-26',
+};
+while (my ($holiday, $start_date) = each $holiday_starts-&gt;%*) {
+    ...
+}</code></pre>
+            <p>Также можно разыменовывать значения, возвращаемые функциями:</p>
+            <pre><code class="language-perl">while (my ($holiday, $start_date) = each holiday_start_dates_for(2020)-&gt;%*) {
+    ...
+}</code></pre>
+
+            <p>Можно делать срезы массивов и хэшей:</p>
+            <pre><code class="language-perl">my @pto_holidays = $holiday_starts-&gt;@{qw( Hannukah Kwanzaa )};
+my @first_recipients = $recipients-&gt;@[0 .. 3];</code></pre>
+
+            <p>Для скаляров применяется <code>->$*</code>:</p>
+            <pre><code class="language-perl">my $not_a_constant = \"variable";
+say $not_a_constant-&gt;$*;</code></pre>
+
+            <p>Постфиксная разыменовка не поддерживает срезы для скаляров.</p>
+            <p>Вы можете выбрать единообразный стиль: использовать только префиксную, обрамляющую или постфиксную разыменовку в своём коде.</p>
+            <p>Дополнительную информацию смотрите в разделе "Postfix Dereference Syntax" документации <code>perlref</code>.</p>
+            <h2>Вложенные структуры данных</h2>
+            <p>Агрегатные типы данных Perl — массивы и хэши — хранят скаляры по целочисленным или строковым ключам. Обратите внимание: именно скаляры.</p>
+            <p>Если попытаться вложить массив в массив напрямую, Perl расплющит все элементы в один массив:</p>
+            <pre><code class="language-perl">my @counts = qw( eenie miney moe );
+my @ducks = qw( huey dewey louie );
+my @game = qw( duck duck grayduck );
+my @famous_triplets = (
+    @counts, @ducks, @game
+);</code></pre>
+
+            <p>Решение — использовать ссылки, которые позволяют создать массив массивов или хэш хэшей. Да, синтаксис ссылок выглядит чуть громоздко.</p>
+            <p>Создание ссылок на уже объявленные переменные:</p>
+            <pre><code class="language-perl">my @famous_triplets = (
+    \@counts, \@ducks, \@game
+);</code></pre>
+            <p>Или можно сразу использовать анонимные массивы:</p>
+            <pre><code class="language-perl">my @famous_triplets = (
+    [qw( eenie miney moe )],
+    [qw( huey dewey louie )],
+    [qw( duck duck goose )],
+);</code></pre>
+            <p>Создание хэша из анонимных хэшей:</p>
+            <pre><code class="language-perl">my %meals = (
+    breakfast =&gt; { entree =&gt; 'eggs', side =&gt; 'hash browns' },
+    lunch =&gt; { entree =&gt; 'panini', side =&gt; 'apple' },
+    dinner =&gt; { entree =&gt; 'steak', side =&gt; 'avocado salad' },
+);</code></pre>
+
+            <h3>Запятая — не обязательна</h3>
+            <p>Перл допускает запятую после последнего элемента списка. Это удобно для будущего добавления новых элементов.</p>
+
+            <h2>Доступ к вложенным структурам</h2>
+            <p>Используйте синтаксис ссылок для обращения к вложенным структурам. Символ переменной определяет, сколько данных нужно получить, а стрелка <code>-&gt;</code> показывает, что часть данных — ссылка:</p>
+            <pre><code class="language-perl">my $last_nephew = $famous_triplets[1]-&gt;[2];
+my $meal_side = $meals{breakfast}-&gt;{side};</code></pre>
+            <p>Стрелку можно опустить для массивов и хэшей (но не для функций):</p>
+            <pre><code class="language-perl">my $nephew = $famous_triplets[1][2];
+my $meal = $meals{breakfast}{side};
+$actions{generous}{buy_food}-&gt;( $nephew, $meal );</code></pre>
+
+            <h2>Блоки для доступа к элементам</h2>
+            <p>Используйте блоки для обращения к вложенным массивам или хэшам как к полноценным структурам:</p>
+            <pre><code class="language-perl">my $nephew_count = @{ $famous_triplets[1] };
+my $dinner_courses = keys %{ $meals{dinner} };</code></pre>
+            <p>Или для среза вложенных данных:</p>
+            <pre><code class="language-perl">my ($entree, $side) = @{ $meals{breakfast} }{ qw( entree side ) };</code></pre>
+
+            <p>Для лучшей читаемости можно использовать временную переменную:</p>
+            <pre><code class="language-perl">my $meal_ref = $meals{breakfast};
+my ($entree, $side) = @$meal_ref{qw( entree side )};</code></pre>
+
+            <p>Или использовать неявную подстановку цикла <code>for</code> (без <code>my</code>):</p>
+            <pre><code class="language-perl">($entree, $side) = @{ $_ }{qw( entree side )} for $meals{breakfast};</code></pre>
+
+            <p>Много примеров работы с вложенными структурами можно найти в справочнике <code>perldoc perldsc</code> ("Perl Data Structures Cookbook").</p>
+            <h2>Автовивификация</h2>
+            <p>Если попытаться записать значение в элемент глубоко вложенной структуры данных, Perl автоматически создаст весь путь к нужному месту:</p>
+            <pre><code class="language-perl">my @aoaoaoa;
+$aoaoaoa[0][0][0][0] = 'nested deeply';</code></pre>
+            <p>После выполнения этого кода массив будет содержать вложенные друг в друга ссылки на массивы, где каждый уровень будет содержать один элемент.</p>
+
+            <p>Аналогично, если обратиться к неопределённому значению как к ссылке на хэш, Perl преобразует его в хэш-ссылку:</p>
+            <pre><code class="language-perl">my %hohoh;
+$hohoh{Robot}{Santa} = 'mostly harmful';</code></pre>
+
+            <p>Такое поведение называется <strong>автовивификацией</strong>. Оно сокращает код инициализации, но не позволяет отличить намеренное создание новых элементов от случайной опечатки.</p>
+
+            <h3>Автовивификация и строгий режим</h3>
+            <p>Вы можете задаться вопросом: как использовать автовивификацию, включая строгие проверки (<code>strict</code>)? Всё зависит от проекта.</p>
+            <p>На стадии разработки допускайте свободу. На стадии тестирования и деплоя повышайте строгость, чтобы избежать побочных эффектов.</p>
+            <p>Пакет <code>autovivification</code> с CPAN позволяет локально отключить автовивификацию для определённых операций.</p>
+
+            <p>Можно явно проверять существование каждого уровня перед разыменованием, но это быстро приводит к громоздкому коду. Лучше пересмотреть модель данных, чтобы избежать чрезмерной вложенности.</p>
+
+            <h2>Отладка вложенных структур данных</h2>
+            <p>Из-за сложности синтаксиса разыменования и возможной путаницы с несколькими уровнями ссылок, отладка вложенных структур может быть сложной.</p>
+
+            <p>Модуль <code>Data::Dumper</code> из ядра Perl превращает произвольные структуры данных в строки кода Perl, помогая визуализировать содержимое:</p>
+            <pre><code class="language-perl">use Data::Dumper;
+my $complex_structure = {
+    numbers =&gt; [ 1 .. 3 ],
+    letters =&gt; [ 'a' .. 'c' ],
+    objects =&gt; {
+        breakfast =&gt; $continental,
+        lunch =&gt; $late_tea,
+        dinner =&gt; $banquet,
+    },
+};
+print Dumper( $complex_structure );</code></pre>
+
+            <p>Пример возможного вывода:</p>
+            <pre><code class="language-perl">$VAR1 = {
+    'numbers' =&gt; [1, 2, 3],
+    'letters' =&gt; ['a', 'b', 'c'],
+    'objects' =&gt; {
+        'breakfast' =&gt; bless({...}, 'Breakfast'),
+        'lunch' =&gt; bless({...}, 'Lunch'),
+        'dinner' =&gt; bless({...}, 'Dinner'),
+    },
+};</code></pre>
+
+            <p><code>Data::Dumper</code> может выводить также объекты и ссылки на функции (если установить <code>$Data::Dumper::Deparse</code> в истинное значение).</p>
+
+            <p>Хотя <code>Data::Dumper</code> удобен, его вывод бывает громоздким. Для более читаемой отладки некоторые разработчики предпочитают модули <code>YAML::XS</code> или <code>JSON</code> (они не генерируют Perl-код, но дают более удобный для чтения результат).</p>
+            <h2>Циклические ссылки</h2>
+            <p>Механизм управления памятью Perl основан на подсчёте ссылок. Однако у него есть недостаток: две ссылки, указывающие друг на друга напрямую или косвенно, создают <strong>циклическую ссылку</strong>, которую Perl сам удалить не сможет.</p>
+            <p>Рассмотрим биологическую модель, где сущность имеет двух родителей и множество детей:</p>
+            <pre><code class="language-perl">my $alice = { mother =&gt; '', father =&gt; '' };
+my $robin = { mother =&gt; '', father =&gt; '' };
+my $cianne = { mother =&gt; $alice, father =&gt; $robin };
+push @{ $alice-&gt;{children} }, $cianne;
+push @{ $robin-&gt;{children} }, $cianne;</code></pre>
+            <p>Теперь <code>$alice</code> и <code>$robin</code> содержат ссылки на <code>$cianne</code>, а <code>$cianne</code> содержит ссылки обратно на <code>$alice</code> и <code>$robin</code>. Их счётчики ссылок никогда не станут равными нулю, и Perl не сможет освободить их память.</p>
+
+            <h3>Решение: ручной разрыв или слабые ссылки</h3>
+            <p>Можно вручную обнулить ссылки (например, очистить детей у родителей или родителей у ребёнка).</p>
+            <p>Или использовать <strong>слабые ссылки</strong>, которые не увеличивают счётчик ссылок. Для этого применяется функция <code>weaken</code> из модуля <code>Scalar::Util</code>:</p>
+            <pre><code class="language-perl">use Scalar::Util 'weaken';
+
+my $alice = { mother =&gt; '', father =&gt; '' };
+my $robin = { mother =&gt; '', father =&gt; '' };
+my $cianne = { mother =&gt; $alice, father =&gt; $robin };
+push @{ $alice-&gt;{children} }, $cianne;
+push @{ $robin-&gt;{children} }, $cianne;
+
+weaken( $cianne-&gt;{mother} );
+weaken( $cianne-&gt;{father} );</code></pre>
+
+            <p>Теперь <code>$cianne</code> всё ещё "видит" <code>$alice</code> и <code>$robin</code>, но слабые ссылки не мешают сборщику мусора освободить объекты, когда их реальный счётчик ссылок станет нулевым.</p>
+            <p>Когда <code>$alice</code> будет уничтожена, ссылка <code>$cianne-&gt;{mother}</code> автоматически станет <code>undef</code>.</p>
+
+            <p>Большинство структур данных в Perl не требуют слабых ссылок, но когда они нужны — они незаменимы.</p>
+
+            <h2>Альтернативы глубоко вложенным структурам</h2>
+            <p>Хотя Perl легко справляется с глубоко вложенными структурами данных, человеческая сложность понимания таких структур высока.</p>
+            <p>Если у вас более двух-трёх уровней вложенности, задумайтесь о переходе к использованию классов и объектов (например, через <code>Moose</code>), чтобы сделать код более читаемым и поддерживаемым.</p>
+        </div>
+        <div class="navigation">
+            <a href="chapter2.html">← Предыдущая глава</a>
+            <a href="../index.html">К оглавлению</a>
+            <a href="chapter4.html">Следующая глава →</a>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-perl.min.js"></script>
+</body>
+</html>

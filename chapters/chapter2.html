@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Глава 2: Основы Perl</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Глава 2: Perl и его сообщество</h1>
+        <div class="content">
+            <h2>Perl и его сообщество</h2>
+
+            <p>Величайшее достижение Perl — это огромное количество доступных библиотек. Ларри Уолл сознательно поощрял сообщество создавать и поддерживать свои расширения для решения любых задач, не раздробляя язык на несовместимые диалекты. И это сработало.</p>
+
+            <p>Технический успех Perl неотделим от роста сообщества. Люди пишут библиотеки, строят новые проекты на базе существующих, создают сообщество, в котором хочется участвовать и которое хочется развивать.</p>
+
+            <p>Сообщество Perl приветствует участников любого уровня — от новичков до разработчиков самого языка. Используй знания, опыт и код тысяч программистов, чтобы стать лучше.</p>
+
+            <h3>CPAN</h3>
+            <p>Perl — прагматичный язык. Если у тебя есть проблема, скорее всего, кто-то уже написал код для её решения и поделился им через CPAN (Comprehensive Perl Archive Network).</p>
+
+            <p>CPAN — это огромный репозиторий библиотек: от доступа к базам данных до протоколов сетевых устройств, от инструментов профилирования до графических библиотек.</p>
+
+            <p>Без CPAN Modern Perl — просто язык. С CPAN — это мощный набор инструментов.</p>
+
+            <h3>Размер CPAN</h3>
+            <p>CPAN ежемесячно пополняется сотнями новых участников и тысячами новых модулей. Например, в мае 2015 года было зарегистрировано 12 207 авторов, 150 552 модуля и 31 873 дистрибуции.</p>
+
+            <p>CPAN — это лишь сервис зеркалирования. Авторы загружают свои дистрибуции на PAUSE, который затем распространяет их по зеркалам. Стандарты сообщества обеспечивают совместимость и удобство работы с дистрибуциями.</p>
+
+            <p>Дополнительные сервисы CPAN обеспечивают автоматическое тестирование, отчёты о багах и поддержку через <a href="http://rt.cpan.org/">RT</a>. Всё это доступно через <a href="http://search.cpan.org/">search.cpan.org</a> и <a href="http://metacpan.org/">metacpan.org</a>.</p>
+
+            <h3>Работа с CPAN</h3>
+            <p>Modern Perl включает клиент CPAN.pm для поиска, загрузки, сборки и установки модулей.</p>
+
+            <pre><code class="language-bash">$ cpan
+cpan[1]&gt; install Modern::Perl</code></pre>
+
+            <p>Или напрямую из командной строки:</p>
+            <pre><code class="language-bash">$ cpan Modern::Perl</code></pre>
+
+            <h3>Требования CPAN</h3>
+            <p>Для установки модулей потребуются стандартные инструменты разработки: утилита make и компилятор C. Strawberry Perl включает их. На MacOS требуется установить XCode. На Linux — build-essential.</p>
+
+            <h3>Инструменты управления CPAN</h3>
+            <ul>
+                <li><strong>App::cpanminus</strong> — лёгкий и быстрый клиент CPAN. Установка: <code>cpan App::cpanminus</code>.</li>
+                <li><strong>App::perlbrew</strong> — управление несколькими версиями Perl:
+                    <pre><code class="language-bash">$ curl -LO http://xrl.us/perlbrew
+$ chmod +x perlbrew
+$ ./perlbrew install
+$ perldoc App::perlbrew</code></pre>
+                </li>
+                <li><strong>local::lib</strong> — позволяет устанавливать модули локально для пользователя или приложения.</li>
+            </ul>
+
+            <p>Эти инструменты предполагают работу в Unix-подобной системе. Для Windows — рекомендуется скачать Padre all-in-one.</p>
+
+            <h3>Сообщество</h3>
+            <p>Официальный сайт: <a href="http://www.perl.org/">perl.org</a>. Там ты найдёшь документацию, исходные коды, списки рассылки и обучающие материалы.</p>
+
+            <p>Если ты новичок, стоит начать с <a href="http://learn.perl.org/faq/beginners.html">списка для новичков</a>.</p>
+
+            <p>Разработка Perl сосредоточена на <a href="http://dev.perl.org/">dev.perl.org</a>.</p>
+
+            <p>Основные сайты CPAN — <a href="http://www.cpan.org/">cpan.org</a>, <a href="http://search.cpan.org/">search.cpan.org</a> и <a href="http://metacpan.org/">metacpan.org</a>.</p>
+
+            <p>Новости и блоги сообщества:</p>
+            <ul>
+                <li><a href="http://blogs.perl.org/">blogs.perl.org</a></li>
+                <li><a href="http://perlsphere.net/">perlsphere.net</a></li>
+                <li><a href="http://PerlTricks.com/">PerlTricks.com</a></li>
+                <li><a href="http://ironman.enlightenedperl.org/">Ironman</a></li>
+                <li><a href="http://perlweekly.com/">Perl Weekly</a> и <a href="https://twitter.com/perlbuzz">@perlbuzz</a></li>
+            </ul>
+
+            <h3>Разработка</h3>
+            <p>Основной трекер ошибок Perl: <a href="http://rt.perl.org/">rt.perl.org</a>.  
+            Трекеры модулей CPAN: <a href="http://rt.cpan.org/">rt.cpan.org</a>.</p>
+
+            <p>Обсуждение разработки происходит в списке рассылки Perl 5 Porters (<a href="http://lists.cpan.org/showlist.cgi?name=perl5-porters">p5p</a>).</p>
+
+            <p>Perl Foundation поддерживает развитие Perl: <a href="http://www.perlfoundation.org/">perlfoundation.org</a>.</p>
+
+            <p>Код многих проектов размещён на <a href="http://github.com/">GitHub</a>. Проект GitPAN (<a href="http://github.com/gitpan/">gitpan</a>) хранит историю всех дистрибуций CPAN.</p>
+
+            <h3>Мероприятия</h3>
+            <p>Сообщество Perl регулярно проводит конференции YAPC (Yet Another Perl Conference): <a href="http://yapc.org/">yapc.org</a>.</p>
+
+            <p>Местные группы Perl Mongers регулярно проводят встречи: <a href="http://www.pm.org/">pm.org</a>.</p>
+
+            <h3>IRC</h3>
+            <p>Основной сервер сообщества: <a href="irc://irc.perl.org/">irc.perl.org</a>.</p>
+
+            <p>Основной канал #perl — свободное общение, а для вопросов лучше использовать #perl-help. Модули вроде Moose и Catalyst имеют свои каналы.</p>
+
+        </div>
+        <div class="navigation">
+            <a href="chapter1.html">← Предыдущая глава</a>
+            <a href="../index.html">К оглавлению</a>
+            <a href="chapter3.html">Следующая глава →</a>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-perl.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Глава 4: Операторы</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Глава 4: Операторы</h1>
+        <div class="content">
+            <h2>Операторы</h2>
+            <p>Некоторые называют Perl «языком, ориентированным на операторы». Оператор Perl — это один или несколько символов, которые обрабатывают ноль или более операндов. Операторы работают аналогично специальным функциям, встроенным в синтаксис языка.</p>
+            
+            <h3>Характеристики операторов</h3>
+            <p>Каждый оператор имеет характеристики: количество операндов, отношение к другим операторам, контексты и синтаксис. Подробности можно найти в <code>perldoc perlop</code> и <code>perldoc perlsyn</code>.</p>
+
+            <h3>Приоритет операторов</h3>
+            <p>Приоритет определяет, в каком порядке Perl выполняет операторы. Операторы с более высоким приоритетом выполняются раньше. Пример:</p>
+            <pre><code class="language-perl">7 + 7 * 10   # результат 77
+(7 + 7) * 10 # результат 140</code></pre>
+            <p>Таблицу приоритетов лучше просматривать время от времени, а не заучивать.</p>
+
+            <h3>Ассоциативность</h3>
+            <p>Ассоциативность определяет направление вычислений: слева направо или справа налево. Например:</p>
+            <pre><code class="language-perl">2 + 3 + 4   # сначала 2 + 3, потом +4
+2 ** 3 ** 4 # сначала 3 ** 4, потом 2 в 81 степени</code></pre>
+            <p>Модуль <code>B::Deparse</code> позволяет увидеть, как Perl реально интерпретирует выражение.</p>
+
+            <h3>Арность</h3>
+            <p>Арность — это количество операндов:</p>
+            <ul>
+                <li>Нулевое: 0 операндов</li>
+                <li>Унарное: 1 операнд</li>
+                <li>Бинарное: 2 операнда</li>
+                <li>Троичное: 3 операнда</li>
+                <li>Списочное: список операндов</li>
+            </ul>
+            <p>Пример для бинарных операторов:</p>
+            <pre><code class="language-perl">2 + 3 - 4   # сначала 2 + 3, потом -4</code></pre>
+
+            <h3>Фиксация (Fixity)</h3>
+            <p>Фиксация описывает расположение оператора относительно операндов:</p>
+            <ul>
+                <li>Инфиксные: между операндами (<code>$a * $b</code>)</li>
+                <li>Префиксные: перед операндом (<code>-$x</code>)</li>
+                <li>Постфиксные: после операнда (<code>$x++</code>)</li>
+                <li>Охватывающие (circumfix): вокруг операнда (<code>{ ... }</code>)</li>
+                <li>Пост-охватывающие (postcircumfix): например, доступ к элементам массива или хэша</li>
+            </ul>
+
+            <h3>Типы операторов</h3>
+
+            <h4>Числовые операторы</h4>
+            <p>Числовой контекст накладывается при арифметических операциях:</p>
+            <pre><code class="language-perl">$a + $b, $a - $b, $a * $b, $a / $b, $a ** $b, $a % $b</code></pre>
+
+            <h4>Строковые операторы</h4>
+            <p>Строковый контекст накладывают:</p>
+            <pre><code class="language-perl">$string1 . $string2   # конкатенация
+$string =~ /regex/   # привязка регулярного выражения
+$string !~ /regex/   # отрицательная привязка</code></pre>
+
+            <h4>Логические операторы</h4>
+            <p>Логический контекст создают:</p>
+            <pre><code class="language-perl">$a && $b, $a || $b, !$a, $a and $b, $a or $b, $a xor $b</code></pre>
+            <p>Оператор <code>//</code> проверяет определенность значения:</p>
+            <pre><code class="language-perl">my $name = shift // 'Fluffy';</code></pre>
+
+            <h4>Тернарный оператор</h4>
+            <p>Три операнда:</p>
+            <pre><code class="language-perl">my $result = $condition ? 'yes' : 'no';</code></pre>
+
+            <h4>Побитовые операторы</h4>
+            <p>Работа на уровне битов:</p>
+            <pre><code class="language-perl">$a &amp; $b, $a | $b, $a ^ $b, $a &lt;&lt; $b, $a &gt;&gt; $b</code></pre>
+
+            <h4>Специальные операторы</h4>
+            <p>Автоинкремент с особенностями:</p>
+            <pre><code class="language-perl">my $num = 1;
+my $str = 'a';
+$num++;
+$str++;</code></pre>
+
+            <p>Оператор повторения:</p>
+            <pre><code class="language-perl">my @nights = ('nights') x 1001;
+my $calendar = 'nights' x 1001;</code></pre>
+
+            <p>Оператор диапазона:</p>
+            <pre><code class="language-perl">my @cards = (2 .. 10, 'J', 'Q', 'K', 'A');</code></pre>
+
+            <p>Диапазон в логическом контексте ("flip-flop"):</p>
+            <pre><code class="language-perl">while (/Hello, $user/ .. /Sincerely,/) {
+    say "&gt; $_";
+}</code></pre>
+
+            <p>Оператор запятой:</p>
+            <pre><code class="language-perl">$a, $b</code></pre>
+
+            <p>Оператор «толстая запятая» (fat comma <code>=&gt;</code>) также автоматически заключает левый операнд в кавычки.</p>
+
+            <p>Оператор «троеточие» (<code>...</code>) используется как заглушка, выбрасывающая исключение "Unimplemented".</p>
+            <pre><code class="language-perl">sub some_example {
+    ...
+}</code></pre>
+        </div>
+        <div class="navigation">
+            <a href="chapter3.html">← Предыдущая глава</a>
+            <a href="../index.html">К оглавлению</a>
+            <a href="chapter5.html">Следующая глава →</a>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-perl.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Глава 9: Управление реальными программами</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Глава 9: Управление реальными программами</h1>
+        <div class="content">
+            <h2>Управление реальными программами</h2>
+            <p>Вы можете выучить много синтаксиса из книги, решая небольшие задачи. Но написание хорошего кода для решения реальных проблем требует больше дисциплины и понимания. Нужно уметь управлять кодом. Как узнать, что он работает? Как его организовать? Что делает его устойчивым к ошибкам? Что делает код чистым? Понятным? Поддерживаемым?</p>
+            <p>Modern Perl помогает ответить на все эти вопросы.</p>
+
+            <h2>Тестирование</h2>
+            <p>Вы уже тестировали свой код.</p>
+            <p>Если вы когда-либо запускали код, замечали ошибку, вносили исправления и запускали снова — вы тестировали код. Тестирование — это процесс проверки, что программа ведёт себя так, как задумано. Эффективное тестирование автоматизирует этот процесс.</p>
+
+            <h3>Test::More</h3>
+            <p>Основная единица тестирования — это проверка (assertion). Она отвечает на простой вопрос: ведёт ли себя код так, как задумано? Любое условие в программе может стать проверкой.</p>
+            <p>Тестирование Perl начинается с модуля Test::More и функции <code>ok()</code>. Она принимает два параметра: булево значение и описание теста:</p>
+            <pre><code class="language-perl">
+use Test::More;
+
+ok 1, 'единица должна быть истиной';
+ok 0, '... а ноль — нет';
+ok '', 'пустая строка должна быть ложью';
+ok '!', '... а непустая строка — нет';
+
+done_testing();
+            </code></pre>
+
+            <p><code>done_testing()</code> сообщает Test::More, что все проверки выполнены. Это помогает обнаружить неожиданное завершение тестов.</p>
+
+            <p>Также можно заранее указать план тестов:</p>
+            <pre><code class="language-perl">
+use Test::More tests => 4;
+
+ok 1, 'единица должна быть истиной';
+ok 0, '... а ноль — нет';
+ok '', 'пустая строка должна быть ложью';
+ok '!', '... а непустая строка — нет';
+            </code></pre>
+
+            <h2>Запуск тестов</h2>
+            <p>Этот тестовый файл создаёт вывод в формате TAP (Test Anything Protocol):</p>
+            <pre><code>
+ok 1 - единица должна быть истиной
+not ok 2 - ... а ноль — нет
+# Failed test '... а ноль — нет'
+# at truth_values.t line 4.
+not ok 3 - пустая строка должна быть ложью
+# Failed test 'пустая строка должна быть ложью'
+# at truth_values.t line 5.
+ok 4 - ... а непустая строка — нет
+1..4
+# Looks like you failed 2 tests of 4.
+            </code></pre>
+
+            <p>Для больших наборов тестов лучше использовать программу <code>prove</code>:</p>
+            <pre><code>
+$ prove truth_values.t
+            </code></pre>
+
+            <p>Ошибки легко исправить:</p>
+            <pre><code class="language-perl">
+ok !0, '... а ноль — нет';
+ok !'', 'пустая строка должна быть ложью';
+            </code></pre>
+
+            <p>Теперь все тесты пройдут:</p>
+            <pre><code>
+$ prove truth_values.t
+truth_values.t .. ok
+All tests successful.
+            </code></pre>
+
+            <p>Полезные опции prove: <code>-j</code> (параллельный запуск), <code>-l</code> (добавить lib/ в @INC), <code>-r</code> (рекурсивный запуск тестов в t/).</p>
+
+            <pre><code class="language-perl">
+alias proveall='prove -j9 --state=slow,save -lr t'
+            </code></pre>
+
+            <h3>Лучшие сравнения</h3>
+            <p>Функция <code>is()</code> сравнивает два значения с помощью оператора <code>eq</code>:</p>
+            <pre><code class="language-perl">
+use Test::More;
+
+is 2 + 2, 4, 'сложение работает';
+is 'pancake', 100, 'блины не число';
+            </code></pre>
+
+            <p>Ошибка будет содержать ожидаемое и полученное значения.</p>
+
+            <p>Проверка количества элементов:</p>
+            <pre><code class="language-perl">
+my @cousins = qw( Rick Kristen Alex Kaycee Eric Corey );
+is @cousins, 6, 'должно быть шесть кузенов';
+            </code></pre>
+
+            <p><code>isnt()</code> проверяет неравенство через оператор <code>ne</code>.</p>
+
+            <p>Для строгих сравнений используйте <code>cmp_ok()</code>:</p>
+            <pre><code class="language-perl">
+cmp_ok 100, '<=', $cur_balance, 'должно быть не меньше 100';
+cmp_ok $monkey, '==', $ape, 'числовые коды обезьян должны совпадать';
+            </code></pre>
+
+            <p>Проверка принадлежности классу с <code>isa_ok()</code>:</p>
+            <pre><code class="language-perl">
+my $chimpzilla = RobotMonkey->new;
+isa_ok $chimpzilla, 'Robot';
+isa_ok $chimpzilla, 'Monkey';
+            </code></pre>
+
+            <p>Проверка наличия методов через <code>can_ok()</code>:</p>
+            <pre><code class="language-perl">
+can_ok $chimpzilla, 'eat_banana';
+can_ok $chimpzilla, 'transform', 'destroy_tokyo';
+            </code></pre>
+
+            <p>Глубокое сравнение структур с <code>is_deeply()</code>:</p>
+            <pre><code class="language-perl">
+use Clone;
+my $numbers = [4, 8, 15, 16, 23, 42];
+my $clonenums = Clone::clone($numbers);
+
+is_deeply $numbers, $clonenums, 'клонирование прошло успешно';
+            </code></pre>
+
+            <h2>Организация тестов</h2>
+            <p>CPAN-пакеты содержат папку <code>t/</code> с тестовыми файлами (.t).</p>
+
+            <ul>
+                <li>Каждый .t файл соответствует одному .pm файлу</li>
+                <li>Или одной логической функции</li>
+            </ul>
+
+            <p>При разработке отдельные файлы ускоряют проверку. Например, добавляя функцию огнедышащего Робо-обезьяны, можно запускать только файл <code>t/robot_monkey/breathe_fire.t</code>.</p>
+
+            <h2>Другие модули для тестирования</h2>
+            <p><code>Test::More</code> использует тестовый движок <code>Test::Builder</code>, который управляет планом тестов и координирует вывод в формате TAP. Это позволяет использовать множество тестовых модулей CPAN вместе в одной программе:</p>
+            <ul>
+                <li><code>Test::Fatal</code> помогает тестировать, выбрасывает ли код исключения.</li>
+                <li><code>Test::MockObject</code> и <code>Test::MockModule</code> позволяют эмулировать интерфейсы.</li>
+                <li><code>Test::WWW::Mechanize</code>, <code>Plack::Test</code> и <code>Test::WWW::Mechanize::PSGI</code> тестируют веб-приложения без реального сервера.</li>
+                <li><code>Test::Database</code> и <code>DBICx::TestDatabase</code> помогают тестировать базы данных.</li>
+                <li><code>Test::Class</code> позволяет организовать тесты в классах. <code>Test::Routine</code> делает то же самое с помощью Moose.</li>
+                <li><code>Test::Differences</code> сравнивает строки и структуры, а <code>Test::LongString</code> — длинные строки.</li>
+                <li><code>Test::Deep</code> сравнивает вложенные структуры данных.</li>
+                <li><code>Devel::Cover</code> показывает, сколько кода покрыто тестами.</li>
+                <li><code>Test::Most</code> собирает в себе несколько полезных модулей для тестирования.</li>
+            </ul>
+            <p>Подробнее о тестировании смотрите на проекте Perl QA: <a href="http://qa.perl.org/">qa.perl.org</a>.</p>
+
+            <h2>Работа с предупреждениями</h2>
+
+            <h3>Генерация предупреждений</h3>
+            <p>Используйте <code>warn</code> для вывода предупреждений:</p>
+            <pre><code class="language-perl">
+warn 'Что-то пошло не так!';
+            </code></pre>
+
+            <p>Модуль <code>Carp</code> расширяет систему предупреждений Perl:</p>
+            <pre><code class="language-perl">
+use Carp 'carp';
+
+sub only_two_arguments {
+    my ($lop, $rop) = @_;
+    carp('Слишком много аргументов') if @_ > 2;
+}
+            </code></pre>
+
+            <p><code>carp()</code> указывает на место вызова функции, а <code>cluck()</code> ещё и выводит стек вызовов. Чтобы сделать все предупреждения подробными, запустите скрипт так:</p>
+            <pre><code>
+$ perl -MCarp=verbose my_prog.pl
+            </code></pre>
+
+            <p>Для отладки чужого кода можно использовать модуль <code>Carp::Always</code>:</p>
+            <pre><code>
+$ perl -MCarp::Always some_program.pl
+            </code></pre>
+
+            <h3>Включение и отключение предупреждений</h3>
+            <p>Флаг <code>-w</code> включает предупреждения глобально. Это устаревший способ. Современный — использовать pragma:</p>
+            <pre><code class="language-perl">
+use warnings;
+            </code></pre>
+
+            <h3>Глобальные флаги предупреждений</h3>
+            <ul>
+                <li><code>-W</code> включает все предупреждения принудительно.</li>
+                <li><code>-X</code> отключает все предупреждения принудительно.</li>
+            </ul>
+            <p>Эти флаги влияют на глобальную переменную <code>$^W</code>.</p>
+
+            <h3>Отключение категорий предупреждений</h3>
+            <p>Можно отключить отдельные категории:</p>
+            <pre><code class="language-perl">
+no warnings 'recursion';
+            </code></pre>
+
+            <p>Полный список категорий смотрите в <code>perldoc perllexwarn</code>.</p>
+
+            <h3>Превращение предупреждений в ошибки</h3>
+            <p>Чтобы сделать предупреждения фатальными:</p>
+            <pre><code class="language-perl">
+use warnings FATAL => 'all';
+            </code></pre>
+
+            <p>Или только определённые категории:</p>
+            <pre><code class="language-perl">
+use warnings FATAL => 'deprecated';
+            </code></pre>
+
+            <p>Будьте осторожны: новые версии Perl могут добавлять новые предупреждения, и код может начать падать.</p>
+
+            <h3>Перехват предупреждений</h3>
+            <p>Можно перехватывать предупреждения через <code>%SIG</code>:</p>
+            <pre><code class="language-perl">
+{
+    my $warning;
+    local $SIG{__WARN__} = sub { $warning .= shift };
+    # что-то рискованное
+    ...
+    say "Перехвачено предупреждение:\n$warning" if $warning;
+}
+            </code></pre>
+
+            <p>Переменная <code>%SIG</code> глобальная, поэтому всегда локализуйте её.</p>
+            <h1>Глава 9: Управление реальными программами</h1>
+            <div class="content">
+                <h2>Регистрация собственных предупреждений</h2>
+                <p>Прагма <code>warnings::register</code> позволяет создавать собственные категории предупреждений, которые пользователи смогут включать и отключать лексически:</p>
+                <pre><code class="language-perl">
+    package Scary::Monkey;
+    use warnings::register;
+                </code></pre>
+    
+                <p>Теперь можно включить их через <code>use warnings 'Scary::Monkey'</code> и отключить через <code>no warnings 'Scary::Monkey'</code>.</p>
+    
+                <p>Проверить активность предупреждений можно через <code>warnings::enabled()</code>, а вывести предупреждение — через <code>warnings::warnif()</code>:</p>
+                <pre><code class="language-perl">
+    package Scary::Monkey;
+    use warnings::register;
+    
+    sub import {
+        warnings::warnif('deprecated', 'пустой импорт из ' . __PACKAGE__ . ' устарел') unless @_;
+    }
+                </code></pre>
+    
+                <p>Подробнее смотрите в <code>perldoc perllexwarn</code>.</p>
+    
+                <h2>Файлы</h2>
+                <p>Большинство программ взаимодействуют с реальным миром через файлы: чтение, запись и обработку текста.</p>
+    
+                <h3>Ввод и вывод</h3>
+                <p>Дескриптор файла представляет состояние одного канала ввода-вывода. Perl стартует с тремя стандартными дескрипторами: <code>STDIN</code>, <code>STDOUT</code> и <code>STDERR</code>.</p>
+    
+                <p>Открытие файла для чтения:</p>
+                <pre><code class="language-perl">
+    open my $fh, '<', 'filename' or die "Cannot read '$filename': $!\n";
+                </code></pre>
+    
+                <p>Основные режимы открытия файлов:</p>
+                <ul>
+                    <li><code>&lt;</code> — чтение;</li>
+                    <li><code>&gt;</code> — запись (перезаписывание);</li>
+                    <li><code>&gt;&gt;</code> — добавление;</li>
+                    <li><code>+&lt;</code> — чтение и запись;</li>
+                    <li><code>-|</code> — чтение из внешнего процесса;</li>
+                    <li><code>|-</code> — запись во внешний процесс.</li>
+                </ul>
+    
+                <p>Файлы можно открыть даже в скаляр:</p>
+                <pre><code class="language-perl">
+    open my $read_fh, '<', \$fake_input;
+    open my $write_fh, '>', \$captured_output;
+    do_something_awesome($read_fh, $write_fh);
+                </code></pre>
+    
+                <p>Смотрите <code>perldoc perlopentut</code> и <code>perldoc perlfaq5</code> для подробностей.</p>
+    
+                <h3>Не забудьте про autodie</h3>
+                <p>Для упрощения примеров предполагаем, что <code>use autodie;</code> включен. Иначе всегда проверяйте возврат системных вызовов.</p>
+    
+                <h3>Юникод, IO-слои и режимы файлов</h3>
+                <p>Чтобы читать/писать в UTF-8:</p>
+                <pre><code class="language-perl">
+    open my $in_fh, '<:encoding(UTF-8)', $infile;
+    open my $out_fh, '>:encoding(UTF-8)', $outfile;
+                </code></pre>
+    
+                <h3>Два аргумента open()</h3>
+                <p>Старый стиль объединял режим и имя файла:</p>
+                <pre><code class="language-perl">
+    open my $fh, "> $file" or die "Cannot write to '$file': $!\n";
+                </code></pre>
+    
+                <p>Используйте современный трёхаргументный <code>open()</code> для безопасности.</p>
+    
+                <h3>Специальный дескриптор DATA</h3>
+                <p>Дескриптор <code>DATA</code> указывает на текст после <code>__DATA__</code> или <code>__END__</code> в исходнике. Можно читать его как обычный файл.</p>
+    
+                <h2>Чтение из файлов</h2>
+                <p>Открытие файла и чтение построчно:</p>
+                <pre><code class="language-perl">
+    open my $fh, '<', 'some_file';
+    while (<$fh>) {
+        chomp;
+        say "Прочитана строка '$_'";
+    }
+                </code></pre>
+    
+                <p>В скалярном контексте <code>readline</code> читает строку за раз. Важно использовать <code>while</code>, а не <code>for</code>, чтобы не читать весь файл в память.</p>
+    
+                <h3>Чтение бинарных файлов</h3>
+                <p>Для работы с бинарными данными (например, изображениями) используйте <code>binmode</code> перед операциями ввода-вывода.</p>
+    
+                <h2>Запись в файлы</h2>
+                <p>Печать в файл:</p>
+                <pre><code class="language-perl">
+    open my $out_fh, '>', 'output_file.txt';
+    print $out_fh "Вот строка текста\n";
+    say $out_fh "... и ещё одна строка";
+                </code></pre>
+    
+                <p><strong>Рекомендация:</strong> всегда обрамляйте дескрипторы в фигурные скобки для ясности:</p>
+                <pre><code class="language-perl">
+    print {$out_fh} "Текст\n";
+                </code></pre>
+    
+                <h2>Закрытие файлов</h2>
+                <p>Когда работа с файлом окончена, закройте его явно:</p>
+                <pre><code class="language-perl">
+    use autodie qw(open close);
+    
+    open my $fh, '>', $file;
+    ...
+    close $fh;
+                </code></pre>
+    
+                <p>Явное закрытие позволяет отлавливать ошибки, например, нехватку места на диске.</p>
+                <h2>Специальные переменные для работы с файлами</h2>
+                <p>Для каждой прочитанной строки Perl увеличивает переменную <code>$. </code>, которая служит счётчиком строк.</p>
+                <p><code>readline</code> использует текущее значение <code>$/</code> в качестве разделителя строк. Обычно это символы перевода строки, соответствующие платформе, но <code>$/</code> можно установить в любую последовательность символов.</p>
+                <p>Например, чтобы читать по записям, разделённым двумя пустыми строками, установите:</p>
+                <pre><code class="language-perl">
+    local $/ = "\n\n";
+                </code></pre>
+    
+                <p>Переменная <code>$|</code> управляет буферизацией вывода. Установите её в ненулевое значение, чтобы вывод происходил сразу после каждой записи:</p>
+                <pre><code class="language-perl">
+    $| = 1;
+                </code></pre>
+    
+                <h3>Автоматическое сбрасывание буфера</h3>
+                <p>Файлы по умолчанию используют полную буферизацию. <code>STDOUT</code> при подключении к терминалу — построчную.</p>
+                <p>Для управления буферизацией на уровне файлового дескриптора используйте метод <code>autoflush()</code>:</p>
+                <pre><code class="language-perl">
+    open my $fh, '>', 'pecan.log';
+    $fh->autoflush(1);
+                </code></pre>
+    
+                <h2>Каталоги и пути</h2>
+                <p>Работа с каталогами схожа с работой с файлами, но запись в каталог невозможна. Откройте каталог через <code>opendir</code>:</p>
+                <pre><code class="language-perl">
+    opendir my $dirh, '/home/monkeytamer/tasks/';
+                </code></pre>
+    
+                <p>Чтение каталога:</p>
+                <pre><code class="language-perl">
+    while (my $file = readdir $dirh) {
+        ...
+    }
+                </code></pre>
+    
+                <p>Или прочитайте весь каталог в массив:</p>
+                <pre><code class="language-perl">
+    my @files = readdir $dirh;
+                </code></pre>
+    
+                <p>Пропустите скрытые файлы (начинающиеся с точки):</p>
+                <pre><code class="language-perl">
+    while (readdir $dirh) {
+        next if /^\./;
+        say "Найдена задача $_!";
+    }
+                </code></pre>
+    
+                <h2>Манипуляции с путями</h2>
+                <p>Perl использует Unix-подобные пути независимо от ОС. Для кроссплатформенной работы используйте модуль <code>File::Spec</code> или более удобный <code>Path::Class</code>:</p>
+                <pre><code class="language-perl">
+    use Path::Class;
+    
+    my $meals = dir('tasks', 'cooking');
+    my $file = file('tasks', 'health', 'robots.txt');
+                </code></pre>
+    
+                <h2>Манипуляции с файлами</h2>
+                <p>Проверка существования файла:</p>
+                <pre><code class="language-perl">
+    say 'Присутствует!' if -e $filename;
+                </code></pre>
+    
+                <p>Другие тесты:</p>
+                <ul>
+                    <li><code>-f</code> — обычный файл</li>
+                    <li><code>-d</code> — каталог</li>
+                    <li><code>-r</code> — файл доступен для чтения</li>
+                    <li><code>-s</code> — файл непустой</li>
+                </ul>
+    
+                <p>Переименование файла:</p>
+                <pre><code class="language-perl">
+    rename 'death_star.txt', 'carbon_sink.txt';
+                </code></pre>
+    
+                <p>Удаление файла:</p>
+                <pre><code class="language-perl">
+    unlink 'useless_file.txt';
+                </code></pre>
+    
+                <p>Текущий рабочий каталог:</p>
+                <pre><code class="language-perl">
+    use Cwd;
+    
+    say cwd();
+                </code></pre>
+    
+                <p>Изменение каталога:</p>
+                <pre><code class="language-perl">
+    chdir '/new/path';
+                </code></pre>
+    
+                <h2>Модули</h2>
+                <p>Модуль — это файл Perl-кода, который можно загрузить через <code>use</code> или <code>require</code>. Он должен возвращать истину в конце.</p>
+                <p>Загрузка модуля:</p>
+                <pre><code class="language-perl">
+    use StrangeMonkey;
+                </code></pre>
+    
+                <p>Perl ищет <code>StrangeMonkey.pm</code> в директориях <code>@INC</code>. Для <code>StrangeMonkey::Persistence</code> ищется <code>StrangeMonkey/Persistence.pm</code>.</p>
+    
+                <h3>Полезные команды perldoc</h3>
+                <ul>
+                    <li><code>perldoc -l Module::Name</code> — путь к файлу</li>
+                    <li><code>perldoc -lm Module::Name</code> — путь без форматирования</li>
+                    <li><code>perldoc -m Module::Name</code> — содержимое файла</li>
+                </ul>
+    
+                <h2>Организация кода с модулями</h2>
+                <p>Даже без ООП полезно разделять код на модули. Это:</p>
+                <ul>
+                    <li>Разделяет логические части системы</li>
+                    <li>Создаёт API</li>
+                    <li>Упрощает организацию кода</li>
+                    <li>Позволяет переиспользовать код</li>
+                </ul>
+    
+                <h2>Использование и импорт</h2>
+                <p>При загрузке модуля через <code>use</code> Perl вызывает его <code>import()</code> с переданными аргументами.</p>
+                <pre><code class="language-perl">
+    use strict;
+    use File::Spec::Functions 'tmpdir';
+    use feature qw(say unicode_strings);
+                </code></pre>
+    
+                <p><code>no</code> вызывает <code>unimport()</code> модуля:</p>
+                <pre><code class="language-perl">
+    use strict;
+    {
+        no strict 'refs';
+    }
+                </code></pre>
+    
+                <p>Эквивалент загрузки модуля через <code>BEGIN</code>:</p>
+                <pre><code class="language-perl">
+    BEGIN {
+        require 'Module/Name.pm';
+        Module::Name->import(qw( list of arguments ));
+    }
+                </code></pre>
+                <h2>Отсутствующие методы, которые не вызывают ошибок</h2>
+                <p>Если в модуле нет <code>import()</code> или <code>unimport()</code>, Perl не вызовет ошибку. Эти методы действительно являются необязательными.</p>
+                <p>Вы можете вызвать <code>import()</code> и <code>unimport()</code> напрямую, хотя вне блока <code>BEGIN</code> это редко имеет смысл; после завершения компиляции их эффекты могут быть незначительными (так как обычно эти методы влияют на процесс компиляции через импорт символов или переключение фич).</p>
+            
+                <p>Портируемые программы соблюдают чувствительность к регистру, даже если технически могут обойтись без этого.</p>
+                <p>И <code>use</code>, и <code>require</code> чувствительны к регистру. Perl различает <code>strict</code> и <code>Strict</code>, но ваша операционная система и файловая система могут не различать. Если написать <code>use Strict;</code> вместо <code>strict</code> на регистро-независимой системе, Perl загрузит <code>Strict.pm</code>, но ничего не произойдет при попытке вызвать <code>Strict-&gt;import()</code> (так как <code>strict.pm</code> определяет пакет <code>strict</code>, а не <code>Strict</code>).</p>
+            
+                <h2>Экспортирование</h2>
+                <p>Модуль может сделать доступными глобальные символы пакета для других пакетов через процесс, называемый экспортированием — обычно через явный или неявный вызов <code>import()</code>.</p>
+                <p>Стандартный способ экспортировать символы — использовать модуль <code>Exporter</code>. Он полагается на глобальные переменные пакета, такие как <code>@EXPORT_OK</code> и <code>@EXPORT</code>, которые определяют экспортируемые символы.</p>
+            
+                <p>Пример модуля <code>StrangeMonkey::Utilities</code>:</p>
+                <pre><code class="language-perl">
+            package StrangeMonkey::Utilities;
+            use Exporter 'import';
+            
+            our @EXPORT_OK = qw( round translate screech );
+                </code></pre>
+            
+                <p>Другой код может использовать этот модуль и импортировать выбранные функции. Можно также экспортировать переменные:</p>
+                <pre><code class="language-perl">
+            push @EXPORT_OK, qw( $spider $saki $squirrel );
+                </code></pre>
+            
+                <p>Экспорт символов по умолчанию:</p>
+                <pre><code class="language-perl">
+            our @EXPORT = qw( monkey_dance monkey_sleep );
+                </code></pre>
+            
+                <p>Чтобы загрузить модуль без импорта символов:</p>
+                <pre><code class="language-perl">
+            use StrangeMonkey::Utilities ();
+                </code></pre>
+            
+                <p>Функции всегда можно вызывать с полным именем:</p>
+                <pre><code class="language-perl">
+            StrangeMonkey::Utilities::screech();
+                </code></pre>
+            
+                <h3>Упрощённое экспортирование</h3>
+                <p>Модуль <code>Sub::Exporter</code> с CPAN предоставляет более удобный способ экспортировать функции без использования глобальных переменных пакета и с дополнительными возможностями. Однако он экспортирует только функции. Модуль <code>Moose::Exporter</code> предоставляет мощные механизмы для систем на базе Moose, но имеет крутую кривую обучения.</p>
+            
+                <h2>Дистрибутивы</h2>
+                <p>Дистрибутив — это набор метаданных и модулей, собранный в единую единицу для распространения, тестирования и установки. Самый лёгкий способ работать с Perl-кодом — следовать стандартам CPAN.</p>
+                <p>Стандарты CPAN описывают упаковку, разрешение зависимостей, установку кода и документации, тестирование и управление репозиториями. Эти стандарты возникли благодаря опыту тысяч разработчиков.</p>
+            
+                <p>Хорошо оформленный дистрибутив включает:</p>
+                <ul>
+                    <li><b>Build.PL</b> или <b>Makefile.PL</b> — скрипт для сборки и установки.</li>
+                    <li><b>MANIFEST</b> — список всех файлов дистрибутива.</li>
+                    <li><b>META.yml</b> и/или <b>META.json</b> — метаданные о дистрибутиве.</li>
+                    <li><b>README</b> — описание проекта и лицензия.</li>
+                    <li><b>lib/</b> — директория модулей Perl.</li>
+                    <li><b>t/</b> — директория с тестами.</li>
+                    <li><b>Changes</b> — журнал изменений.</li>
+                </ul>
+            
+                <p>Каждый дистрибутив должен иметь уникальное имя и номер версии. Публичный сервис <a href="http://cpants.perl.org/">CPANTS</a> оценивает качество дистрибутивов.</p>
+            
+                <h2>Инструменты CPAN для управления дистрибутивами</h2>
+                <p>Perl включает несколько инструментов для работы с дистрибутивами:</p>
+                <ul>
+                    <li><b>CPAN.pm</b> — официальный клиент CPAN.</li>
+                    <li><b>ExtUtils::MakeMaker</b> — система для сборки, тестирования и установки дистрибутивов.</li>
+                    <li><b>Test::More</b> — базовый модуль для написания тестов.</li>
+                    <li><b>TAP::Harness</b> и <b>prove</b> — запуск и интерпретация тестов.</li>
+                </ul>
+            
+                <p>Дополнительные полезные модули с CPAN:</p>
+                <ul>
+                    <li><b>App::cpanminus</b> — лёгкий CPAN-клиент без конфигурации.</li>
+                    <li><b>App::perlbrew</b> — управление несколькими установками Perl.</li>
+                    <li><b>CPAN::Mini</b> — создание локального зеркала CPAN.</li>
+                    <li><b>Dist::Zilla</b> — автоматизация сборки дистрибутивов.</li>
+                    <li><b>Test::Reporter</b> — отправка результатов тестов авторам модулей.</li>
+                    <li><b>Carton</b> и <b>Pinto</b> — управление зависимостями проектов.</li>
+                    <li><b>Module::Build</b> — альтернатива MakeMaker на чистом Perl.</li>
+                </ul>
+
+                <h2>Проектирование дистрибутивов</h2>
+    <p>Процесс проектирования дистрибутива мог бы занять целую книгу (например, «Writing Perl Modules for CPAN» Сэма Трегора), но несколько принципов помогут вам начать. Используйте утилиты вроде <code>Module::Starter</code> или <code>Dist::Zilla</code>. Первоначальная цена обучения их конфигурации и правилам может показаться высокой, но выгода от правильной настройки (и в случае <code>Dist::Zilla</code> — автоматического обновления) избавит вас от рутинной работы.</p>
+
+    <p>Дистрибутив должен следовать нескольким не связанным с кодом правилам:</p>
+    <ul>
+        <li>Каждый дистрибутив выполняет одну, чётко определённую задачу. Она может включать в себя объединение нескольких связанных дистрибутивов в один установочный пакет. Разбивайте своё ПО на отдельные дистрибутивы для правильного управления зависимостями и соблюдения инкапсуляции.</li>
+        <li>Каждый дистрибутив имеет единственный номер версии. Номера версий всегда должны увеличиваться. Политика семантического версионирования <a href="http://semver.org/">(semver.org)</a> разумна и совместима с подходом Perl.</li>
+        <li>Каждый дистрибутив предоставляет чётко определённый API. Комплексный автоматизированный набор тестов может гарантировать его стабильность между версиями. Локальные зеркала CPAN позволяют использовать инфраструктуру CPAN для тестирования ваших дистрибутивов и их зависимостей.</li>
+        <li>Тесты дистрибутива должны быть полезными и воспроизводимыми. CPAN-инфраструктура поддерживает автоматизированную отправку результатов тестов — используйте её!</li>
+        <li>Интерфейсы должны быть простыми и эффективными. Избегайте глобальных символов и экспорта по умолчанию; позволяйте пользователям импортировать только то, что им нужно. Не загрязняйте их пространства имён.</li>
+    </ul>
+
+    <h2>Пакет UNIVERSAL</h2>
+    <p>Встроенный пакет <code>UNIVERSAL</code> — это предок всех других пакетов в Perl, что делает его финальным родителем в объектно-ориентированном смысле. <code>UNIVERSAL</code> предоставляет несколько методов для использования, наследования или переопределения.</p>
+
+    <h3>Метод VERSION()</h3>
+    <p>Метод <code>VERSION()</code> возвращает значение переменной <code>$VERSION</code> вызывающего пакета или класса. Если передать версию как параметр, метод выбросит исключение, если версия будет меньше заданной.</p>
+
+    <pre><code class="language-perl">
+my $hm = HowlerMonkey->new;
+say HowlerMonkey->VERSION;     # печатает 1.23
+say $hm->VERSION;              # печатает 1.23
+say $hm->VERSION( 0.0 );        # печатает 1.23
+say $hm->VERSION( 1.23 );       # печатает 1.23
+say $hm->VERSION( 2.0 );        # исключение!
+    </code></pre>
+
+    <p>Переопределять <code>VERSION()</code> почти никогда не требуется.</p>
+
+    <h3>Метод DOES()</h3>
+    <p>Метод <code>DOES()</code> используется для работы с ролями. Он принимает объект и имя роли и возвращает истину, если объект поддерживает эту роль через наследование, делегирование, композицию или другие механизмы.</p>
+
+    <p>Реализация по умолчанию вызывает <code>isa()</code>, поскольку наследование — один из способов реализации роли. Пример:</p>
+
+    <pre><code class="language-perl">
+say Cappuchin->DOES('Monkey');     # печатает 1
+say $cappy->DOES('Monkey');        # печатает 1
+say Cappuchin->DOES('Invertebrate'); # печатает 0
+    </code></pre>
+
+    <p>Переопределите <code>DOES()</code>, если вручную реализуете роль.</p>
+
+    <h3>Метод can()</h3>
+    <p>Метод <code>can()</code> принимает строку с именем метода или функции и возвращает ссылку на неё, если она существует, либо ложное значение в противном случае. Вызывать можно на классе, объекте или имени пакета.</p>
+
+    <p>Пример:</p>
+    <pre><code class="language-perl">
+if (my $meth = SpiderMonkey->can('screech')) {
+    ...
+}
+    </code></pre>
+
+    <p>И распространённый паттерн:</p>
+    <pre><code class="language-perl">
+if (my $meth = $sm->can('screech')) {
+    $sm->$meth();
+}
+    </code></pre>
+
+    <p>Пример использования вместе с <code>Class::Load</code>:</p>
+    <pre><code class="language-perl">
+use Class::Load;
+die "Couldn't load $module!" unless load_class($module);
+
+if (my $register = $module->can('register')) {
+    $register->();
+}
+    </code></pre>
+
+    <p><strong>Полезные модули:</strong> <code>Class::Load</code> для загрузки классов, <code>Module::Pluggable</code> для создания систем плагинов.</p>
+
+    <h3>Метод isa()</h3>
+    <p>Метод <code>isa()</code> принимает строку с именем класса или базового типа (<code>SCALAR</code>, <code>ARRAY</code>, <code>HASH</code>, <code>Regexp</code>, <code>IO</code> или <code>CODE</code>) и проверяет, принадлежит ли объект или класс к нему.</p>
+
+    <p>Примеры:</p>
+    <pre><code class="language-perl">
+say $pepper->isa('Monkey');    # печатает 1
+say $pepper->isa('Mammal');    # печатает 1
+say $pepper->isa('HASH');      # печатает 1
+say Monkey->isa('Mammal');     # печатает 1
+say $pepper->isa('Dolphin');   # печатает 0
+say $pepper->isa('ARRAY');     # печатает 0
+say Monkey->isa('HASH');       # печатает 0
+    </code></pre>
+
+    <p>Любой класс может переопределить <code>isa()</code>. Это полезно для мок-объектов (<code>Test::MockObject</code> и <code>Test::MockModule</code>) или для работы с кодом без поддержки ролей.</p>
+
+    <h2>Существует ли класс?</h2>
+    <p>Хотя <code>UNIVERSAL::isa()</code> и <code>UNIVERSAL::can()</code> являются методами (Эквивалентность методов и функций, стр. 259), безопасно использовать <code>can()</code> как функцию только для проверки существования класса в Perl. Если <code>UNIVERSAL::can($classname, 'can')</code> возвращает истинное значение, это означает, что кто-то где-то определил класс с именем <code>$classname</code>. Этот класс может быть непригодным для использования, но он существует.</p>
+
+    <h2>Расширение UNIVERSAL</h2>
+    <p>Есть соблазн добавить дополнительные методы в <code>UNIVERSAL</code>, чтобы они были доступны всем другим классам и объектам Perl. Избегайте этого искушения: глобальное поведение может вызвать тонкие побочные эффекты, особенно в коде, который вы не писали и не поддерживаете.</p>
+    <p>Тем не менее, иногда допустимо использовать <code>UNIVERSAL</code> для целей отладки или исправления неправильного поведения по умолчанию. Например, модуль <code>UNIVERSAL::ref</code> делает почти бесполезный оператор <code>ref()</code> полезным. Модули <code>UNIVERSAL::can</code> и <code>UNIVERSAL::isa</code> помогают отлавливать ошибки анти-полиморфизма (Эквивалентность методов и функций, стр. 259). <code>Perl::Critic</code> может обнаруживать такие и другие проблемы.</p>
+    <p>Вне очень тщательно контролируемого кода и очень специфических прагматичных ситуаций нет причин помещать код непосредственно в <code>UNIVERSAL</code>, особенно учитывая наличие альтернативных подходов к проектированию.</p>
+
+    <h2>Генерация кода</h2>
+    <p>Новички часто пишут больше кода, чем необходимо. Они начинают с длинных списков процедурного кода, затем открывают для себя функции, параметры, объекты и–возможно–функции высшего порядка и замыкания.</p>
+    <p>По мере развития навыков вы будете писать меньше кода для решения тех же задач. Вы будете использовать лучшие абстракции и писать более обобщённый код. Вы сможете переиспользовать код–и когда добавление функций будет сопровождаться удалением строк кода, это будет настоящим успехом.</p>
+    <p>Создание программ, которые пишут программы за вас–метапрограммирование или генерация кода–позволяет строить переиспользуемые абстракции. Хотя это может привести к хаосу, с его помощью можно создать по-настоящему впечатляющие вещи. Например, именно благодаря метапрограммированию возможен <code>Moose</code> (Moose, стр. 159).</p>
+
+    <h3>eval</h3>
+    <p>Самая простая техника генерации кода — собрать строку с валидным Perl-кодом и скомпилировать её с помощью строкового <code>eval</code>. В отличие от блочного <code>eval</code> для перехвата исключений, строковый <code>eval</code> компилирует строку в текущей области видимости, включая пакет и лексические переменные.</p>
+    <p>Обычное применение этой техники — создание резервного варианта в случае невозможности загрузить опциональную зависимость:</p>
+
+    <pre><code class="language-perl">
+eval { require Monkey::Tracer } or eval 'sub Monkey::Tracer::log {}';
+    </code></pre>
+
+    <p>Если <code>Monkey::Tracer</code> недоступен, создаётся пустая функция <code>log()</code>. Однако правильно использовать <code>eval</code> непросто: нужно внимательно работать с кавычками, особенно при интерполяции переменных:</p>
+
+    <pre><code class="language-perl">
+sub generate_accessors {
+    my ($methname, $attrname) = @_;
+    eval <<"END_ACCESSOR";
+sub get_$methname {
+    my \$self = shift;
+    return \$self->{$attrname};
+}
+sub set_$methname {
+    my (\$self, \$value) = \@_;
+    \$self->{$attrname} = \$value;
+}
+END_ACCESSOR
+}
+    </code></pre>
+
+    <p>Не забудьте про экранирование символов! Иначе возможны ошибки в коде и некорректная подсветка синтаксиса.</p>
+
+    <h3>Параметризованные замыкания</h3>
+    <p>Замыкания позволяют создавать код с параметрами без дополнительных <code>eval</code>:</p>
+
+    <pre><code class="language-perl">
+sub generate_accessors {
+    my $attrname = shift;
+    my $getter = sub {
+        my $self = shift;
+        return $self->{$attrname};
+    };
+    my $setter = sub {
+        my ($self, $value) = @_;
+        $self->{$attrname} = $value;
+    };
+    return $getter, $setter;
+}
+    </code></pre>
+
+    <p>Это решение избегает проблем с кавычками и компилируется только один раз, экономя память. Различие лишь в лексическом привязывании переменной <code>$attrname</code>.</p>
+
+    <h3>Установка в таблицу символов</h3>
+    <p>Установка функций в таблицу символов выполняется так:</p>
+
+    <pre><code class="language-perl">
+my ($get, $set) = generate_accessors('pie');
+no strict 'refs';
+*{'get_pie'} = $get;
+*{'set_pie'} = $set;
+    </code></pre>
+
+    <p>Будьте осторожны: если вы присваиваете сразу при определении функции, может возникнуть скрытая ошибка:</p>
+
+    <pre><code class="language-perl">
+no strict 'refs';
+*{$methname} = sub { ... }; # плохой стиль
+    </code></pre>
+
+    <p>Правильный способ:</p>
+
+    <pre><code class="language-perl">
+{
+    my $sub = sub { ... };
+    no strict 'refs';
+    *{$methname} = $sub;
+}
+    </code></pre>
+
+    <h3>Упрощение работы с таблицей символов</h3>
+    <p>Используйте модуль <code>Package::Stash</code> с CPAN для упрощения работы с таблицами символов.</p>
+
+    <h3>Манипуляции на этапе компиляции</h3>
+    <p>Код, созданный через строковый <code>eval</code>, компилируется в момент выполнения программы. Чтобы создать код на этапе компиляции, оберните генерацию в блок <code>BEGIN</code>:</p>
+
+    <pre><code class="language-perl">
+sub make_accessors { ... }
+BEGIN {
+    for my $accessor (qw(age name weight)) {
+        my ($get, $set) = make_accessors($accessor);
+        no strict 'refs';
+        *{"get_$accessor"} = $get;
+        *{"set_$accessor"} = $set;
+    }
+}
+    </code></pre>
+
+    <p>При использовании <code>use</code> Perl оборачивает весь импортируемый код в неявный <code>BEGIN</code>. При <code>require</code> этого не происходит.</p>
+
+    <h3>Подводные камни компиляции и присваивания</h3>
+    <p>Будьте внимательны: связывание имени переменной и её значения происходит в разные моменты:</p>
+
+    <pre><code class="language-perl">
+use UNIVERSAL::require;
+my $wanted_package = 'Monkey::Jetpack';
+BEGIN {
+    $wanted_package->require;
+    $wanted_package->import;
+}
+    </code></pre>
+
+    <p>Этот код сломается, так как в момент исполнения <code>BEGIN</code> переменная <code>$wanted_package</code> ещё не получила значение. Следует использовать только значения, доступные уже на этапе компиляции.</p>
+    <h2>Class::MOP</h2>
+    <p>В отличие от установки ссылок на функции для заполнения пространств имён и создания методов, в Perl нет простого способа динамически создавать классы. На помощь приходит Moose со своей встроенной библиотекой Class::MOP. Она предоставляет протокол метаобъектов (MOP) — механизм создания и управления объектной системой через объекты и методы.</p>
+    <p>Вместо того чтобы писать хрупкий код со строковыми <code>eval</code> или вручную ковыряться в таблицах символов, вы можете манипулировать сущностями и абстракциями программы с помощью объектов.</p>
+    <p>Создание класса:</p>
+
+    <pre><code class="language-perl">
+use Class::MOP;
+my $class = Class::MOP::Class->create('Monkey::Wrench');
+    </code></pre>
+
+    <p>Добавление атрибутов и методов при создании:</p>
+
+    <pre><code class="language-perl">
+my $class = Class::MOP::Class->create(
+    'Monkey::Wrench' => (
+        attributes => [
+            Class::MOP::Attribute->new('$material'),
+            Class::MOP::Attribute->new('$color'),
+        ],
+        methods => {
+            tighten => sub { ... },
+            loosen => sub { ... },
+        },
+    ),
+);
+    </code></pre>
+
+    <p>Или позже, через метакласс:</p>
+
+    <pre><code class="language-perl">
+$class->add_attribute(
+    experience => Class::MOP::Attribute->new('$xp')
+);
+$class->add_method(bash_zombie => sub { ... });
+    </code></pre>
+
+    <p>MOP даёт вам возможность не только создавать новые сущности во время выполнения программы, но и заглядывать внутрь существующего (MOP-совместимого) кода:</p>
+
+    <pre><code class="language-perl">
+my @attrs = $class->get_all_attributes;
+my @meths = $class->get_all_methods;
+    </code></pre>
+
+    <p>Аналогично, <code>Class::MOP::Attribute</code> и <code>Class::MOP::Method</code> позволяют создавать, управлять и инспектировать атрибуты и методы.</p>
+
+    <h2>Перегрузка</h2>
+    <p>Perl не является всецело объектно-ориентированным языком. Его основные типы данных (скаляры, массивы, хеши) не являются объектами с методами. Однако вы можете контролировать поведение своих собственных классов и объектов при приведении типов или в контекстах. Это и есть перегрузка.</p>
+    <p>Перегрузка — мощная, но тонкая вещь. Например, объект в логическом контексте по умолчанию считается истинным, если вы явно не перегрузите это поведение. Иногда это нужно, например, при реализации паттерна "Null Object" (<a href="http://www.c2.com/cgi/wiki?NullObject" target="_blank">Null Object Pattern</a>).</p>
+
+    <h3>Перегрузка часто используемых операций</h3>
+    <p>Прагма <code>overload</code> позволяет ассоциировать функции с перегружаемыми операциями. Пара "операция => функция" передаётся в <code>use overload</code>. Класс <code>Null</code>, который всегда возвращает ложь в логическом контексте, может выглядеть так:</p>
+
+    <pre><code class="language-perl">
+package Null {
+    use overload 'bool' => sub { 0 };
+    ...
+}
+    </code></pre>
+
+    <p>Добавим строковое представление:</p>
+
+    <pre><code class="language-perl">
+package Null {
+    use overload
+        'bool' => sub { 0 },
+        '""'   => sub { '(null)' };
+}
+    </code></pre>
+
+    <p>Числовая перегрузка сложнее, потому что арифметические операторы являются бинарными (Арность, стр. 98). Нужно определить, какая перегрузка имеет приоритет. Чтобы избежать путаницы, проще всего перегрузить приведение к числу ('0+') и включить <code>fallback</code>:</p>
+
+    <pre><code class="language-perl">
+package Null {
+    use overload
+        'bool' => sub { 0 },
+        '""'   => sub { '(null)' },
+        '0+'   => sub { 0 },
+        fallback => 1;
+}
+    </code></pre>
+
+    <p>Установка <code>fallback</code> в значение истина позволяет Perl использовать другие определённые перегрузки при необходимости, а если их нет — работать как обычно, без перегрузок. Это часто предпочтительный вариант.</p>
+
+    <p>Без <code>fallback</code> Perl будет использовать только явно определённые перегрузки и выбросит исключение при попытке выполнить неперегруженную операцию.</p>
+
+    <h3>Перегрузка и наследование</h3>
+    <p>Подклассы наследуют перегрузки от родительских классов. Они могут переопределить поведение двумя способами:</p>
+    <ul>
+        <li>Определить перегрузки через ссылку на функцию, если родитель тоже использует ссылки.</li>
+        <li>Или определить перегрузки через имя метода, чтобы переопределить их в потомках.</li>
+    </ul>
+
+    <p>Например:</p>
+
+    <pre><code class="language-perl">
+package Null {
+    use overload
+        'bool' => 'get_bool',
+        '""'   => 'get_string',
+        '0+'   => 'get_num',
+        fallback => 1;
+
+    sub get_bool { 0 }
+}
+    </code></pre>
+
+    <p>Подкласс может изменить только нужное поведение, например:</p>
+
+    <pre><code class="language-perl">
+package Null::ButTrue {
+    use parent 'Null';
+    sub get_bool { 1 }
+}
+    </code></pre>
+    <h2>Применение перегрузки</h2>
+    <p>Перегрузка может показаться заманчивым инструментом для создания символьных сокращений для новых операций. Дистрибутив CPAN <code>IO::All</code> доводит эту идею до предела, создавая простой и элегантный API. Однако на каждый блестящий API, доведённый до совершенства через правильное использование перегрузки, приходится десяток беспорядков. Иногда лучший код избегает хитростей в пользу простоты.</p>
+    <p>Переопределение операций сложения, умножения и даже конкатенации в классе <code>Matrix</code> имеет смысл, потому что для этих операций существует устоявшееся обозначение. Для новой предметной области без такого устоявшегося обозначения перегрузка — плохая идея. То же касается случаев, когда приходится "жмуриться", чтобы сопоставить существующие операторы Perl с другим синтаксисом.</p>
+    <p>В книге Damian Conway "Perl Best Practices" предлагается ещё одно применение перегрузки: предотвращение случайного неправильного использования объектов. Например, перегрузка приведения к числу с вызовом <code>croak()</code> для объектов, которые не имеют разумного численного представления, может помочь найти и исправить настоящие ошибки.</p>
+
+    <h2>Тейнтинг</h2>
+    <p>Некоторые возможности Perl помогают писать безопасные программы. Эти инструменты не заменяют осторожного мышления и планирования, но они поощряют осмотрительность и понимание, помогая избежать тонких ошибок.</p>
+    <p>Режим тейнта (taint mode) — это метка, прикрепляемая ко всем данным, поступающим извне программы. Любые данные, полученные на основе тейнтованных данных, также считаются тейнтованными.</p>
+    <p>Вы можете использовать тейнтованные данные внутри программы, но если вы попытаетесь использовать их для воздействия на внешний мир небезопасным способом, Perl выбросит фатальное исключение.</p>
+
+    <h3>Использование режима тейнта</h3>
+    <p>Подробное объяснение режима тейнта можно найти в <code>perldoc perlsec</code>.</p>
+    <p>Запустите вашу программу с аргументом <code>-T</code> на командной строке, чтобы включить режим тейнта. Если вы добавили этот аргумент в шебанг-строку (<code>#!</code>), необходимо запускать скрипт напрямую. Если запустить его как <code>perl mytaintedapp.pl</code> без флага <code>-T</code>, Perl завершится с ошибкой — к моменту обработки шебанг-строки будет уже поздно тейнтовать данные из <code>%ENV</code>.</p>
+
+    <h3>Источники тейнта</h3>
+    <p>Тейнт может поступать из двух источников: ввода из файлов и операционной среды программы. Ввод из файлов включает любые данные, читаемые из файлов или получаемые от пользователей через сеть. Окружение включает аргументы командной строки, переменные окружения и результаты системных вызовов. Даже чтение содержимого директории через <code>readdir</code> приводит к тейнтованию данных.</p>
+    <p>Функция <code>tainted()</code> из модуля <code>Scalar::Util</code> возвращает истину, если аргумент тейнтован:</p>
+
+    <pre><code class="language-perl">
+die 'О нет! Данные тейнтованы!' if Scalar::Util::tainted( $sketchy_data );
+    </code></pre>
+
+    <h3>Удаление тейнта из данных</h3>
+    <p>Чтобы удалить тейнт, нужно извлечь проверенные данные через регулярное выражение с захватом. Только данные из захваченных групп будут считаться безопасными. Например, для проверки телефонного номера США:</p>
+
+    <pre><code class="language-perl">
+die 'Номер всё ещё тейнтован!' unless $number =~ /(\(\d{3}\) \d{3}-\d{4})/;
+my $safe_number = $1;
+    </code></pre>
+
+    <p>Чем более специфичным будет ваше регулярное выражение, тем безопаснее будет программа. Подход "запретить определённые вещи" опасен — лучше запретить что-то безопасное, чем пропустить вредное.</p>
+
+    <h3>Удаление тейнта из окружения</h3>
+    <p>Переменная <code>%ENV</code> содержит переменные окружения операционной системы. Эти данные считаются тейнтованными, так как их легко изменить извне. Безопасная программа должна удалить потенциально опасные ключи и явно установить <code>$ENV{PATH}</code>:</p>
+
+    <pre><code class="language-perl">
+delete @ENV{ qw( IFS CDPATH ENV BASH_ENV ) };
+$ENV{PATH} = '/path/to/app/binaries/';
+    </code></pre>
+
+    <p>Если не установить <code>$ENV{PATH}</code> явно, Perl пожалуется на его небезопасность. Это связано с тем, что наличие текущего каталога или изменяемых директорий в пути позволяет злоумышленнику заменить исполняемые файлы.</p>
+    <p>По тем же причинам в режиме тейнта <code>@INC</code> по умолчанию не содержит текущего каталога. Также игнорируются переменные окружения <code>PERL5LIB</code> и <code>PERLLIB</code>. Добавлять каталоги с библиотеками следует через pragma <code>lib</code> или флаг <code>-I</code>.</p>
+
+    <h3>Подводные камни тейнта</h3>
+    <p>Режим тейнта либо включён, либо выключен — промежуточных состояний нет. Иногда это побуждает людей использовать слишком разрешающие регулярные выражения для удаления тейнта, создавая иллюзию безопасности. Проверяйте правила удаления тейнта внимательно.</p>
+    <p>К сожалению, не все модули CPAN корректно обрабатывают тейнтованные данные. Это ошибка, которую авторам стоит воспринимать серьёзнее. Для обеспечения постепенного перехода можно использовать флаг <code>-t</code>, который переводит ошибки тейнта в предупреждения. Это не полноценная замена режиму <code>-T</code>, но помогает постепенно исправлять существующие программы.</p>
+        </div>
+
+        <div class="navigation">
+            <a href="chapter8.html">← Предыдущая глава</a>
+            <a href="../index.html">К оглавлению</a>
+            <a href="chapter10.html">Следующая глава →</a>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-perl.min.js"></script>
+</body>
+</html>

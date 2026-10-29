@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Глава 6: Регулярные выражения</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Глава 6: Регулярные выражения</h1>
+        <div class="content">
+            <h2>Регулярные выражения и сопоставление</h2>
+            <p>Перл называют Practical Extraction and Reporting Language. Регулярные выражения позволяют Перлу быть особенно эффективным для обработки текста.</p>
+
+            <h3>Литералы</h3>
+            <p>Простейшее регулярное выражение — это поиск подстроки:</p>
+            <pre><code class="language-perl">my $name = 'Chatfield';
+say 'Нашли шляпу!' if $name =~ /hat/;
+</code></pre>
+
+            <p>Оператор сопоставления <code>=~</code> связывает строку слева и шаблон справа. Оператор <code>!~</code> — это отрицание сопоставления.</p>
+
+            <h3>Замена</h3>
+            <p>Оператор замены <code>s///</code> меняет найденную подстроку:</p>
+            <pre><code class="language-perl">my $status = 'I feel ill.';
+$status =~ s/ill/well/;
+say $status;
+</code></pre>
+
+            <h3>Оператор qr//</h3>
+            <p>Создание регулярных выражений как объектов:</p>
+            <pre><code class="language-perl">my $hat = qr/hat/;
+say 'Нашли шляпу!' if $name =~ /$hat/;
+</code></pre>
+
+            <p>И комбинирование:</p>
+            <pre><code class="language-perl">my $field = qr/field/;
+say 'Нашли шляпу на поле!' if $name =~ /$hat$field/;
+</code></pre>
+
+            <h3>Квантификаторы</h3>
+            <p>Квантификаторы управляют количеством повторений элемента.</p>
+
+            <h4>Ноль или один: ?</h4>
+            <pre><code class="language-perl">my $cat_or_ct = qr/ca?t/;
+like 'cat', $cat_or_ct, "'cat' соответствует /ca?t/";
+like 'ct', $cat_or_ct, "'ct' соответствует /ca?t/";
+</code></pre>
+
+            <h4>Один или более: +</h4>
+            <pre><code class="language-perl">my $some_a = qr/ca+t/;
+like 'cat', $some_a, "'cat' соответствует /ca+t/";
+like 'caat', $some_a, "'caat' соответствует /ca+t/";
+like 'caaat', $some_a, "'caaat' соответствует /ca+t/";
+like 'caaaat', $some_a, "'caaaat' соответствует /ca+t/";
+unlike 'ct', $some_a, "'ct' не соответствует /ca+t/";
+</code></pre>
+
+            <h4>Ноль или более: *</h4>
+            <pre><code class="language-perl">my $any_a = qr/ca*t/;
+like 'cat', $any_a, "'cat' соответствует /ca*t/";
+like 'caat', $any_a, "'caat' соответствует /ca*t/";
+like 'caaat', $any_a, "'caaat' соответствует /ca*t/";
+like 'caaaat', $any_a, "'caaaat' соответствует /ca*t/";
+like 'ct', $any_a, "'ct' соответствует /ca*t/";
+</code></pre>
+
+            <h4>Точное количество повторений: {n}</h4>
+            <pre><code class="language-perl">my $only_one_a = qr/ca{1}t/;
+like 'cat', $only_one_a, "'cat' соответствует /ca{1}t/";
+</code></pre>
+
+            <h4>От n повторений: {n,}</h4>
+            <pre><code class="language-perl">my $some_a = qr/ca{1,}t/;
+like 'cat', $some_a, "'cat' соответствует /ca{1,}t/";
+like 'caat', $some_a, "'caat' соответствует /ca{1,}t/";
+like 'caaat', $some_a, "'caaat' соответствует /ca{1,}t/";
+like 'caaaat', $some_a, "'caaaat' соответствует /ca{1,}t/";
+</code></pre>
+
+            <h4>От n до m повторений: {n,m}</h4>
+            <pre><code class="language-perl">my $few_a = qr/ca{1,3}t/;
+like 'cat', $few_a, "'cat' соответствует /ca{1,3}t/";
+like 'caat', $few_a, "'caat' соответствует /ca{1,3}t/";
+like 'caaat', $few_a, "'caaat' соответствует /ca{1,3}t/";
+unlike 'caaaat', $few_a, "'caaaat' не соответствует /ca{1,3}t/";
+</code></pre>
+
+            <p>Краткие квантификаторы (? + *) чаще используются на практике, так как они читаются проще.</p>
+
+            <h2>Жадность</h2>
+            <p>Квантификаторы <code>+</code> и <code>*</code> жадные: они пытаются сопоставить как можно больше текста.</p>
+
+            <pre><code class="language-perl">my $hot_meal = qr/hot.*meal/;
+say 'Нашли горячую еду!' if 'I have a hot meal' =~ $hot_meal;
+say 'Нашли горячую еду!' if 'one-shot, piecemeal work!' =~ $hot_meal;
+</code></pre>
+
+            <p>Модификатор <code>?</code> превращает жадный квантификатор в нежадный:</p>
+
+            <pre><code class="language-perl">my $minimal_greedy = qr/hot.*?meal/;
+say 'Нашли горячую еду' if 'ilikeahotmeal' =~ /$minimal_greedy/;
+</code></pre>
+
+            <p>Аналогично для <code>+?</code>:</p>
+
+            <pre><code class="language-perl">my $minimal_greedy_plus = qr/hot.+?meal/;
+unlike 'ilikeahotmeal', $minimal_greedy_plus;
+like 'i like a hot meal', $minimal_greedy_plus;
+</code></pre>
+
+            <h2>Якоря в регулярных выражениях</h2>
+            <p>Якоря фиксируют позицию начала или конца совпадения.</p>
+
+            <pre><code class="language-perl">my $seven_down = qr/\Al${letters_only}{2}m/;
+my $seven_down = qr/\Al${letters_only}{2}m\z/;
+</code></pre>
+
+            <p><code>\A</code> соответствует только началу строки, <code>\z</code> — только концу строки.</p>
+
+            <p><code>\b</code> соответствует границе слова:</p>
+
+            <pre><code class="language-perl">my $seven_down = qr/\bl${letters_only}{2}m\b/;
+</code></pre>
+
+            <p>Перл 5.22 добавил более точный якорь <code>\b{wb}</code> для поддержки Юникода:</p>
+
+            <pre><code class="language-perl">say "Паника" if "Don't Panic" =~ /Don\b/;
+say "Нет паники" unless "Don't Panic" =~ /Don\b{wb}/;
+</code></pre>
+
+            <h2>Метасимволы</h2>
+            <p>Метасимволы дают регулярным выражениям дополнительную силу:</p>
+
+            <ul>
+                <li><code>.</code> — любой символ кроме перевода строки</li>
+                <li><code>\w</code> — символ слова (буквы, цифры, подчёркивание)</li>
+                <li><code>\d</code> — цифра</li>
+                <li><code>\s</code> — пробельный символ</li>
+            </ul>
+
+            <pre><code class="language-perl">next unless $word =~ /l\w\wm/;
+next unless $number =~ /\d{3}-\d{3}-\d{4}/;
+</code></pre>
+
+            <h3>Отрицательные метасимволы</h3>
+            <ul>
+                <li><code>\W</code> — не-слово</li>
+                <li><code>\D</code> — не-цифра</li>
+                <li><code>\S</code> — не-пробел</li>
+                <li><code>\B</code> — не-граница слова</li>
+            </ul>
+
+            <h2>Классы символов</h2>
+            <p>Классы символов группируют символы в одну группу:</p>
+
+            <pre><code class="language-perl">my $ascii_vowels = qr/[aeiou]/;
+my $maybe_cat = qr/c${ascii_vowels}t/;
+</code></pre>
+
+            <p>Чтобы избежать ошибок интерполяции переменных, используйте скобки <code>{}</code>.</p>
+
+            <p>Диапазоны символов можно задавать через дефис:</p>
+
+            <pre><code class="language-perl">my $ascii_letters_only = qr/[a-zA-Z]/;
+</code></pre>
+
+            <p>Чтобы включить дефис в класс символов, поставьте его первым, последним или экранируйте:</p>
+
+            <pre><code class="language-perl">my $interesting_punctuation = qr/[-!?]/;
+my $line_characters = qr/[|=\-_]/;
+</code></pre>
+
+            <p>Отрицание класса символов через <code>^</code>:</p>
+
+            <pre><code class="language-perl">my $not_an_ascii_vowel = qr/[^aeiou]/;
+</code></pre>
+
+<h2>Захват</h2>
+<p>Регулярные выражения позволяют группировать и захватывать части совпадений для дальнейшего использования.</p>
+
+<pre><code class="language-perl">my $area_code = qr/\(\d{3}\)/;
+my $local_number = qr/\d{3}-?\d{4}/;
+my $phone_number = qr/$area_code\s?$local_number/;
+</code></pre>
+
+<p>Чтобы экранировать скобки, нужно использовать обратный слэш.</p>
+
+<h3>Именованные захваты</h3>
+<p>Именованный захват позволяет получить часть совпадения по имени:</p>
+
+<pre><code class="language-perl">if ($contact_info =~ /(?&lt;phone&gt;$phone_number)/) {
+say "Найден номер $+{phone}";
+}
+</code></pre>
+
+<p>Именованная форма записи: <code>(?&lt;имя&gt;...)</code>. После успешного сопоставления данные попадают в хеш <code>%+</code>.</p>
+
+<h3>Нумерованные захваты</h3>
+<p>Можно использовать и стандартные нумерованные захваты:</p>
+
+<pre><code class="language-perl">if ($contact_info =~ /($phone_number)/) {
+say "Найден номер $1";
+}
+</code></pre>
+
+<p>Первое совпадение — в <code>$1</code>, второе — в <code>$2</code> и так далее. В списочном контексте:</p>
+
+<pre><code class="language-perl">if (my ($number) = $contact_info =~ /($phone_number)/) {
+say "Найден номер $number";
+}
+</code></pre>
+
+<p>В подстановках также можно использовать захваченные значения:</p>
+
+<pre><code class="language-perl">my $order = 'Vegan brownies!';
+$order =~ s/Vegan (\w+)/Vegetarian $1/;
+$order =~ s/Vegan (?&lt;food&gt;\w+)/Vegetarian $+{food}/;
+</code></pre>
+
+<h2>Группировка и Альтернативы</h2>
+<p>Квантификаторы можно применять к любым элементам регулярного выражения:</p>
+
+<pre><code class="language-perl">my $pork = qr/pork/;
+my $beans = qr/beans/;
+like 'pork and beans', qr/\A$pork?.*?$beans/, 'может быть pork, обязательно beans';
+</code></pre>
+
+<p>Для большей точности:</p>
+
+<pre><code class="language-perl">my $pork = qr/pork/;
+my $and = qr/and/;
+my $beans = qr/beans/;
+like 'pork and beans', qr/\A$pork? $and? $beans/, 'может быть pork, может быть and, обязательно beans';
+</code></pre>
+
+<h3>Альтернация</h3>
+<p>Альтернативы позволяют выбрать одно из нескольких возможных совпадений:</p>
+
+<pre><code class="language-perl">my $rice = qr/rice/;
+my $beans = qr/beans/;
+like 'rice', qr/$rice|$beans/, 'Найден рис';
+like 'beans', qr/$rice|$beans/, 'Найдены бобы';
+</code></pre>
+
+<p>Альтернация имеет низкий приоритет. Лучше группировать варианты явно:</p>
+
+<pre><code class="language-perl">my $starches = qr/(?:pasta|potatoes|rice)/;
+</code></pre>
+
+<p><b>Примечание:</b> Строковое представление регулярки включает некаптурирующую группу: <code>qr/rice|beans/</code> превращается в <code>(?^u:rice|beans)</code>.</p>
+<h2>Другие экранирующие последовательности</h2>
+<p>Чтобы сопоставить литеральный экземпляр метасимвола, экранируйте его с помощью обратного слэша (<code>\</code>).</p>
+
+<pre><code class="language-perl">my ($text, $literal_text) = @_;
+return $text =~ /\Q$literal_text\E/;
+</code></pre>
+
+<p>Конструкция <code>\Q...\E</code> отключает интерпретацию метасимволов внутри себя — полезно при работе с пользовательским вводом.</p>
+
+<h3>Безопасность регулярных выражений</h3>
+<p>Будьте осторожны при обработке пользовательских регулярных выражений: возможны атаки отказа в обслуживании через специально сконструированные паттерны.</p>
+
+<h2>Ассерты (Assertions)</h2>
+<p>Ассерты не потребляют символы строки, а проверяют условия в определённых точках.</p>
+
+<pre><code class="language-perl">my $just_a_cat = qr/cat\b/;
+my $safe_feline = qr/cat(?!astrophe)/;
+my $disastrous_feline = qr/cat(?=astrophe)/;
+</code></pre>
+
+<p><b>Примеры:</b></p>
+<ul>
+    <li><code>(?!...)</code> — отрицательная проверка вперёд</li>
+    <li><code>(?=...)</code> — положительная проверка вперёд</li>
+    <li><code>(?&lt;!...\)</code> — отрицательная проверка назад</li>
+    <li><code>(?&lt;=...)</code> — положительная проверка назад</li>
+</ul>
+
+<pre><code class="language-perl">my $middle_cat = qr/(?&lt;!\A)cat/;
+my $space_cat = qr/(?&lt;=\s)cat/;
+</code></pre>
+
+<h3>Ассерт \K</h3>
+<p>Ассерт <code>\K</code> позволяет отбросить часть совпадения до него:</p>
+
+<pre><code class="language-perl">my $spacey_cat = qr/\s+\Kcat/;
+like 'my cat has been to space', $spacey_cat;
+like 'my cat has been to doublespace', $spacey_cat;
+</code></pre>
+
+<p>Это особенно полезно для аккуратных замен:</p>
+
+<pre><code class="language-perl">my $exclamation = 'This is a catastrophe!';
+$exclamation =~ s/cat\K\w+!/./;
+like $exclamation, qr/\bcat\./, "That wasn't so bad!";
+</code></pre>
+
+<p>До <code>\K</code> текст участвует в совпадении, но в замену попадает только то, что после.</p>
+<h2>Модификаторы регулярных выражений</h2>
+
+<p>Модификаторы изменяют поведение операторов поиска, замены и <code>qr//</code>. Например:</p>
+
+<pre><code class="language-perl">my $pet = 'ELLie';
+like $pet, qr/Ellie/, 'Nice puppy!';
+like $pet, qr/Ellie/i, 'shift key br0ken';
+</code></pre>
+
+<p><b>/i</b> — регистронезависимый поиск.</p>
+
+<p>Модификаторы можно также вставлять внутрь шаблона:</p>
+
+<pre><code class="language-perl">my $find_a_cat = qr/(?&lt;feline&gt;(?i)cat)/;
+</code></pre>
+
+<p>Отключить модификатор можно через знак <code>-</code>:</p>
+
+<pre><code class="language-perl">my $find_a_rational = qr/(?&lt;number&gt;(?-i)Rat)/;
+</code></pre>
+
+<ul>
+    <li><b>/m</b> — позволяет <code>^</code> и <code>$</code> работать внутри текста.</li>
+    <li><b>/s</b> — позволяет <code>.</code> захватывать символ новой строки.</li>
+    <li><b>/r</b> — возвращает изменённую строку, оставляя оригинал нетронутым.</li>
+    <li><b>/x</b> — позволяет использовать пробелы и комментарии в шаблоне для читаемости.</li>
+    <li><b>/g</b> — глобальный поиск.</li>
+    <li><b>/e</b> — выполняет код справа от замены.</li>
+</ul>
+
+<h2>Примеры:</h2>
+
+<pre><code class="language-perl">my $status = 'I am hungry for pie.';
+my $newstatus = $status =~ s/pie/cake/r;
+</code></pre>
+
+<p><b>/g</b> также может сочетаться с <code>\G</code> для поэтапной обработки строки:</p>
+
+<pre><code class="language-perl">while ($contents =~ /\G(\w{3})(\w{3})(\w{4})/g) {
+push @numbers, "($1) $2-$3";
+}
+</code></pre>
+
+<p>Модификатор <b>/e</b> позволяет вставлять вычисляемые выражения в подстановку:</p>
+
+<pre><code class="language-perl">$sequel =~ s{Scarlett( O'Hara)?}{
+'Mauve' . (defined $1 ? ' Midway' : '')
+}ge;
+</code></pre>
+
+<h2>Умное сравнение</h2>
+
+<p>Оператор <code>~~</code> делает контекстно-зависимое сравнение двух операндов:</p>
+
+<pre><code class="language-perl">use experimental 'smartmatch';
+
+my ($x, $y) = (10, 20);
+say 'Not equal numerically' unless $x ~~ $y;
+
+my $z = '10 little endians';
+say 'Equal numeric-ishally' if $x ~~ $z;
+</code></pre>
+
+<p>Некоторые примеры:</p>
+
+<ul>
+    <li>Числа сравниваются как числа</li>
+    <li>Строки через <code>eq</code></li>
+    <li>Массив и скаляр: ищется скаляр в массиве</li>
+    <li>Хеш и скаляр: проверка наличия ключа</li>
+</ul>
+
+<p>Будьте осторожны: механизм сложный, особенно для объектов и сложных структур.</p>
+<h2>Юникод и регулярные выражения</h2>
+
+<p>Perl отлично поддерживает работу с Unicode. Метасимволы <code>\w</code>, <code>\d</code> и <code>\s</code> в регулярных выражениях учитывают символы Unicode по умолчанию.</p>
+
+<pre><code class="language-perl">use utf8;
+
+my $snowman = "☃";
+say 'Found snowman' if $snowman =~ /\w/;
+</code></pre>
+
+<p>Для специальных потребностей используйте модификаторы:</p>
+<ul>
+    <li><b>/a</b> — ASCII-безопасный режим (только базовые латинские символы).</li>
+    <li><b>/aa</b> — ещё более строгий ASCII-режим.</li>
+    <li><b>/u</b> — явное включение Unicode.</li>
+    <li><b>/l</b> — локаль-зависимый режим сопоставления.</li>
+</ul>
+
+<h2>Расширенные регулярные выражения</h2>
+
+<p>Perl позволяет использовать комментарии, именованные группы, условия и даже рекурсивные конструкции внутри регулярных выражений.</p>
+
+<h3>Комментарии внутри шаблонов</h3>
+
+<p>С модификатором <code>/x</code> можно вставлять комментарии:</p>
+
+<pre><code class="language-perl">my $re = qr{
+\A          # начало строки
+[A-Z]+      # одна или более заглавных латинских букв
+\d{2,4}     # от двух до четырех цифр
+\z          # конец строки
+}x;
+</code></pre>
+
+<h3>Условные выражения</h3>
+
+<p>Регулярные выражения Perl могут содержать конструкции типа "если — то — иначе":</p>
+
+<pre><code class="language-perl">/(?(?=PATTERN)THEN|ELSE)/
+</code></pre>
+
+<p>Пример:</p>
+
+<pre><code class="language-perl">my $check = qr/(?(?=\d{3}-)\d{3}-\d{2}-\d{4}|\d{9})/;
+</code></pre>
+
+<h3>Рекурсивные выражения</h3>
+
+<p>Perl позволяет рекурсивно ссылаться на захваченные группы:</p>
+
+<pre><code class="language-perl">my $nested_parens = qr/
+\(              # открывающая скобка
+(?:             # беззахватная группа
+[^()]+      # всё кроме скобок
+|           # или
+(?&nested)  # рекурсивный вызов шаблона
+)*
+\)              # закрывающая скобка
+/x;
+</code></pre>
+
+<p>Это позволяет парсить вложенные скобки, цитаты и другие подобные структуры.</p>
+
+<h2>Поддержка библиотеки регулярных выражений</h2>
+
+<p>Perl использует собственный движок регулярных выражений, но вы можете задать использование альтернативного движка через модуль <code>re::engine</code>:</p>
+
+<pre><code class="language-perl">use re::engine::PluginName;
+</code></pre>
+
+<p>Например, модуль <code>re::engine::PCRE</code> позволяет использовать совместимость с Perl Compatible Regular Expressions из внешних библиотек.</p>
+
+        </div>
+        <div class="navigation">
+            <a href="chapter5.html">← Предыдущая глава</a>
+            <a href="../index.html">К оглавлению</a>
+            <a href="chapter7.html">Следующая глава →</a>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-perl.min.js"></script>
+</body>
+</html>

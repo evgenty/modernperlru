@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Глава 7: Объектно-ориентированное программирование</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Глава 7: Объектно-ориентированное программирование</h1>
+        <div class="content">
+
+            <h2>Объекты</h2>
+
+            <p>Каждая крупная программа имеет несколько уровней проектирования: от конкретных деталей задачи до организации кода на верхнем уровне. Для управления этой сложностью нужны абстракция и инкапсуляция.</p>
+            <p>Функций бывает недостаточно. Один из популярных подходов — объектно-ориентированное программирование (ООП), где программы работают с объектами — уникальными сущностями с собственными данными.</p>
+
+            <h2>Moose</h2>
+
+            <p>Базовая объектная система Perl минимальна, но гибка. Для удобства используется <b>Moose</b> — полноценная объектная система, доступная через CPAN.</p>
+
+            <pre><code class="language-perl">package Cat {
+    use Moose;
+}
+</code></pre>
+
+            <p>Создание экземпляров класса:</p>
+
+            <pre><code class="language-perl">my $brad = Cat->new;
+my $jack = Cat->new;
+</code></pre>
+
+            <h2>Методы</h2>
+
+            <p>Метод — это функция, связанная с классом. Первый аргумент метода — это <code>$self</code> (вызываемый объект или класс).</p>
+
+            <pre><code class="language-perl">package Cat {
+    use Moose;
+    sub meow {
+        my $self = shift;
+        say 'Meow!';
+    }
+}
+</code></pre>
+
+            <pre><code class="language-perl">my $choco = Cat->new;
+$choco->meow;
+</code></pre>
+
+            <p>Методы, работающие с данными объекта, называются экземплярными. Конструкторы вроде <code>new()</code> — это методы класса.</p>
+
+            <h2>Атрибуты</h2>
+
+            <p>Атрибуты — это уникальные данные объекта. В Moose атрибуты объявляются через <code>has</code>:</p>
+
+            <pre><code class="language-perl">package Cat {
+    use Moose;
+    has 'name', is => 'ro', isa => 'Str';
+}
+</code></pre>
+
+            <p>Создание объектов с параметрами:</p>
+
+            <pre><code class="language-perl">my $cat = Cat->new( name => 'Tuxie' );
+say "Created a cat for ", $cat->name;
+</code></pre>
+
+            <p>Полная форма записи:</p>
+
+            <pre><code class="language-perl">has 'name' => ( is => 'ro', isa => 'Str' );
+</code></pre>
+
+            <p>Можно делать атрибуты доступными для записи с помощью <code>rw</code>:</p>
+
+            <pre><code class="language-perl">package Cat {
+    use Moose;
+    has 'name', is => 'ro', isa => 'Str';
+    has 'age', is => 'ro', isa => 'Int';
+    has 'diet', is => 'rw';
+}
+</code></pre>
+
+            <pre><code class="language-perl">my $fat = Cat->new(
+    name => 'Fatty',
+    age => 8,
+    diet => 'Sea Treats'
+);
+
+say $fat->name, ' eats ', $fat->diet;
+
+$fat->diet('Low Sodium Kitty Lo Mein');
+say $fat->name, ' now eats ', $fat->diet;
+</code></pre>
+
+            <p>При попытке изменить <code>ro</code>-атрибут будет выброшено исключение.</p>
+
+            <p>Некоторые разработчики предпочитают делать все атрибуты только для чтения и передавать начальные значения через конструктор — это повышает надёжность кода.</p>
+
+            <p>Таким образом, объект содержит связанные данные и может выполнять над ними действия. Класс описывает эти данные и поведения. Разные экземпляры имеют своё состояние, но используют один и тот же интерфейс методов.</p>
+
+            <h2>Инкапсуляция</h2>
+
+            <p>Moose позволяет описывать атрибуты экземпляров классов, а также управлять их свойствами (например, имя кота нельзя изменить после задания). Само Moose решает, как хранить эти данные — доступ к ним осуществляется через аксессоры. Это и есть инкапсуляция: скрытие деталей реализации от пользователей объекта.</p>
+
+            <p>Пример расчёта возраста кота на основе года рождения:</p>
+
+            <pre><code class="language-perl">package Cat {
+    use Moose;
+    has 'name', is => 'ro', isa => 'Str';
+    has 'diet', is => 'rw';
+    has 'birth_year', is => 'ro', isa => 'Int';
+
+    sub age {
+        my $self = shift;
+        my $year = (localtime)[5] + 1900;
+        return $year - $self->birth_year;
+    }
+}
+</code></pre>
+
+            <p>Синтаксис создания объектов изменился, но использование объекта снаружи осталось прежним. Это и есть суть инкапсуляции.</p>
+
+            <h2>Совместимость и API</h2>
+
+            <p>Вы можете настроить конструктор Moose так, чтобы принимать возраст и вычислять <code>birth_year</code> автоматически. Подробнее — в <code>Moose::Manual::Attributes</code>.</p>
+
+            <p>Пример с атрибутом по умолчанию:</p>
+
+            <pre><code class="language-perl">package Cat {
+    use Moose;
+    has 'name', is => 'ro', isa => 'Str';
+    has 'diet', is => 'rw', isa => 'Str';
+    has 'birth_year',
+        is => 'ro',
+        isa => 'Int',
+        default => sub { (localtime)[5] + 1900 };
+}
+</code></pre>
+
+            <p>Создание объекта без указания года рождения:</p>
+
+            <pre><code class="language-perl">my $kitten = Cat->new( name => 'Hugo' );
+</code></pre>
+
+            <h2>Полиморфизм</h2>
+
+            <p>Главная сила ООП — это возможность работы с разными типами данных через общий интерфейс.</p>
+
+            <pre><code class="language-perl">sub show_vital_stats {
+    my $object = shift;
+    say 'My name is ', $object->name;
+    say 'I am ', $object->age;
+    say 'I eat ', $object->diet;
+}
+</code></pre>
+
+            <p>Функция <code>show_vital_stats</code> работает с любым объектом, который поддерживает методы <code>name()</code>, <code>age()</code> и <code>diet()</code>. Это и есть полиморфизм — возможность заменить один объект на другой, если интерфейс совпадает.</p>
+
+            <h3>Duck Typing</h3>
+
+            <p>Perl не требует формального объявления отношений между классами. Если объект умеет <code>quack()</code>, его можно считать уткой — это и есть "утиная типизация" (duck typing).</p>
+
+            <p>Пример использования методов с разным смыслом в зависимости от контекста:</p>
+
+            <pre><code class="language-perl"># возраст кота
+my $years = $zeppie->age;
+
+# выдержка сыра
+$cheese->age;
+</code></pre>
+
+            <p>Таким образом, важно не только наличие методов, но и то, что они на самом деле делают.</p>
+
+            <h2>Роли</h2>
+
+            <p>Роль — это именованная коллекция поведения и состояния. Класс организует поведение и состояние для объектов, а роль группирует их в именованные коллекции. Роль нельзя инстанцировать напрямую, её можно только "исполнить" в классе.</p>
+
+            <p>Например, <code>Animal</code> может выполнять роль <code>LivingBeing</code>, а <code>Cheese</code> — роль <code>Storable</code>:</p>
+
+            <pre><code class="language-perl">package LivingBeing {
+    use Moose::Role;
+    requires qw( name age diet );
+}
+</code></pre>
+
+            <p>Класс <code>Cat</code> должен явно указать, что он реализует эту роль:</p>
+
+            <pre><code class="language-perl">package Cat {
+    use Moose;
+    has 'name', is => 'ro', isa => 'Str';
+    has 'diet', is => 'rw', isa => 'Str';
+    has 'birth_year', is => 'ro', isa => 'Int', default => sub { (localtime)[5] + 1900 };
+    with 'LivingBeing';
+    sub age {
+        my $self = shift;
+        my $year = (localtime)[5] + 1900;
+        return $year - $self->birth_year;
+    }
+}
+</code></pre>
+
+            <p>Теперь можно проверить поддержку роли через метод <code>DOES</code>:</p>
+
+            <pre><code class="language-perl">say 'Alive!' if $fluffy->DOES('LivingBeing');
+say 'Moldy!' if $cheese->DOES('LivingBeing');
+</code></pre>
+
+            <p>Роли позволяют разделять поведение и реализацию. Например, можно вынести расчёт возраста в отдельную роль:</p>
+
+            <pre><code class="language-perl">package CalculateAge::From::BirthYear {
+    use Moose::Role;
+    has 'birth_year', is => 'ro', isa => 'Int', default => sub { (localtime)[5] + 1900 };
+
+    sub age {
+        my $self = shift;
+        my $year = (localtime)[5] + 1900;
+        return $year - $self->birth_year;
+    }
+}
+</code></pre>
+
+            <p>И затем применить сразу несколько ролей:</p>
+
+            <pre><code class="language-perl">package Cat {
+    use Moose;
+    has 'name', is => 'ro', isa => 'Str';
+    has 'diet', is => 'rw';
+    with 'LivingBeing', 'CalculateAge::From::BirthYear';
+}
+</code></pre>
+
+            <h2>Наследование</h2>
+
+            <p>Перл поддерживает наследование: дочерний класс расширяет поведение родительского класса, добавляя новое или переопределяя старое. Наследование — это частный случай выполнения роли.</p>
+
+            <p>Когда использовать роли, а когда наследование?</p>
+
+            <ul>
+                <li><strong>Наследование</strong> — если класс действительно расширяет родительский.</li>
+                <li><strong>Роли</strong> — если класс требует дополнительного поведения, особенно если его можно осмысленно назвать.</li>
+            </ul>
+
+            <p>Пример базового класса <code>LightSource</code>:</p>
+
+            <pre><code class="language-perl">package LightSource {
+    use Moose;
+
+    has 'candle_power', is => 'ro', isa => 'Int', default => 1;
+    has 'enabled', is => 'ro', isa => 'Bool', default => 0, writer => '_set_enabled';
+
+    sub light {
+        my $self = shift;
+        $self->_set_enabled(1);
+    }
+
+    sub extinguish {
+        my $self = shift;
+        $self->_set_enabled(0);
+    }
+}
+</code></pre>
+
+            <p>Атрибут <code>enabled</code> имеет приватный аксессор <code>_set_enabled</code>, который используется внутри методов.</p>
+
+            <h2>Наследование и атрибуты</h2>
+            <p>Подкласс LightSource может определить промышленную супер-свечу с яркостью в сто раз больше:</p>
+            <pre><code class="language-perl">package SuperCandle {
+    use Moose;
+    extends 'LightSource';
+    has '+candle_power', default =&gt; 100;
+}</code></pre>
+            <p><code>extends</code> принимает список имён классов-родителей. Если бы в классе была только эта строка, объекты SuperCandle вели бы себя как LightSource. У экземпляра SuperCandle были бы атрибуты <code>candle_power</code> и <code>enabled</code> и методы <code>light()</code> и <code>extinguish()</code>.</p>
+            <p>Плюс <code>+</code> перед именем атрибута (например, <code>candle_power</code>) указывает, что класс переопределяет атрибут. Здесь новое значение по умолчанию — 100.</p>
+
+            <h2>Порядок вызова методов (MRO)</h2>
+            <p>Перл сначала ищет метод в классе объекта, затем у родителя, потом у предков и так далее. При множественном наследовании (например, Hovercraft от Boat и Car) порядок поиска становится сложнее. Перл использует стратегию поиска в глубину, но модуль <code>mro</code> позволяет изменить это поведение на, например, C3.</p>
+
+            <h2>Наследование и методы</h2>
+            <p>Как и атрибуты, методы могут быть переопределены:</p>
+            <pre><code class="language-perl">package Glowstick {
+    use Moose;
+    extends 'LightSource';
+    sub extinguish {}
+}</code></pre>
+            <p>Вызов <code>extinguish()</code> на объекте Glowstick ничего не делает. Чтобы явно показать намерение переопределить метод, в Moose используют <code>override</code> и <code>super()</code>:</p>
+            <pre><code class="language-perl">package LightSource::Cranky {
+    use Carp 'carp';
+    use Moose;
+    extends 'LightSource';
+    
+    override light =&gt; sub {
+        my $self = shift;
+        carp "Can't light a lit LightSource!" if $self-&gt;enabled;
+        super();
+    };
+    
+    override extinguish =&gt; sub {
+        my $self = shift;
+        carp "Can't extinguish unlit LightSource!" unless $self-&gt;enabled;
+        super();
+    };
+}</code></pre>
+
+            <h2>Наследование и isa()</h2>
+            <p>Метод <code>isa()</code> возвращает истину, если объект является экземпляром или потомком указанного класса:</p>
+            <pre><code class="language-perl">say 'Похоже на LightSource' if $sconce-&gt;isa('LightSource');
+say 'Hominidae не светятся' unless $chimpy-&gt;isa('LightSource');</code></pre>
+
+            <h2>Moose и объектная система Perl</h2>
+            <p>Moose расширяет стандартные возможности Perl для ООП, предоставляя конструкторы, деструкторы, аксессоры и инкапсуляцию. При этом можно работать и с обычными объектами Perl.</p>
+
+            <p>Пример использования метаобъектного протокола:</p>
+            <pre><code class="language-perl">my $metaclass = Monkey::Pants-&gt;meta;
+say 'Атрибуты Monkey::Pants:';
+say $_-&gt;name for $metaclass-&gt;get_all_attributes;
+say 'Методы Monkey::Pants:';
+say $_-&gt;fully_qualified_name for $metaclass-&gt;get_all_methods;</code></pre>
+
+            <p>Можно увидеть и подклассы:</p>
+            <pre><code class="language-perl">my $metaclass = Monkey-&gt;meta;
+say 'Monkey — родитель классов:';
+say $_ for $metaclass-&gt;subclasses;</code></pre>
+
+            <h2>MooseX::Declare и Moops</h2>
+            <p>MooseX::Declare добавляет ключевые слова <code>class</code>, <code>role</code> и <code>method</code>:</p>
+            <pre><code class="language-perl">use MooseX::Declare;
+
+role LivingBeing { requires qw( name age diet ) }
+
+role CalculateAge::From::BirthYear {
+    has 'birth_year',
+        is =&gt; 'ro',
+        isa =&gt; 'Int',
+        default =&gt; sub { (localtime)[5] + 1900 };
+    
+    method age {
+        return (localtime)[5] + 1900 - $self-&gt;birth_year;
+    }
+}
+
+class Cat with LivingBeing with CalculateAge::From::BirthYear {
+    has 'name', is =&gt; 'ro', isa =&gt; 'Str';
+    has 'diet', is =&gt; 'rw';
+}</code></pre>
+
+            <p>Аналогичный код на Moops:</p>
+            <pre><code class="language-perl">use Moops;
+
+role LivingBeing {
+    requires qw( name age diet );
+}
+
+role CalculateAge::From::BirthYear :ro {
+    has 'birth_year',
+        isa =&gt; Int,
+        default =&gt; sub { (localtime)[5] + 1900 };
+    
+    method age {
+        return (localtime)[5] + 1900 - $self-&gt;birth_year;
+    }
+}
+
+class Cat with LivingBeing with CalculateAge::From::BirthYear :ro {
+    has 'name', isa =&gt; Str;
+    has 'diet', is =&gt; 'rw';
+}</code></pre>
+<h2>Стройные Лоси (The Svelte Alces)</h2>
+<p>Moose — не маленькая библиотека, но очень мощная. Популярной альтернативой является <strong>Moo</strong> — более лёгкая библиотека, почти полностью совместимая с Moose. При необходимости экономии памяти или скорости многие проекты частично или полностью переходят на Moo. Начинайте с Moose, а затем оценивайте целесообразность перехода.</p>
+
+<h2>Blessed-ссылки</h2>
+<p>Базовая объектная система Perl минималистична и опирается на три правила:</p>
+<ul>
+    <li>Класс — это пакет.</li>
+    <li>Метод — это функция.</li>
+    <li>Объект — это благословленная ссылка.</li>
+</ul>
+<p>Из этих правил можно построить любую объектную систему. Хотя минимализм затрудняет метапрограммирование, для небольших программ он подходит. Для проектов больше нескольких сотен строк лучше использовать Moose.</p>
+
+<p><strong>bless</strong> связывает ссылку с именем класса, превращая её в объект:</p>
+<pre><code class="language-perl">
+sub new {
+my $class = shift;
+bless {}, $class;
+}
+</code></pre>
+<p>Конструктор обычно называется <code>new()</code> и принимает имя класса как первый аргумент. Можно использовать разные типы ссылок:</p>
+<pre><code class="language-perl">
+my $array_obj = bless [], $class;
+my $scalar_obj = bless \$scalar, $class;
+my $func_obj = bless \&some_func, $class;
+</code></pre>
+
+<p>Пример класса для баскетболистов:</p>
+<pre><code class="language-perl">
+package Player {
+sub new {
+my ($class, %attrs) = @_;
+bless \%attrs, $class;
+}
+}
+</code></pre>
+<p>Создание объектов:</p>
+<pre><code class="language-perl">
+my $joel = Player->new( number => 10, position => 'center' );
+my $damian = Player->new( number => 0, position => 'guard' );
+</code></pre>
+<p>Доступ к данным напрямую небезопасен:</p>
+<pre><code class="language-perl">
+sub format {
+my $self = shift;
+return '#' . $self->{number} . ' plays ' . $self->{position};
+}
+</code></pre>
+<p>Лучше использовать аксессоры:</p>
+<pre><code class="language-perl">
+sub number { return shift->{number} }
+sub position { return shift->{position} }
+</code></pre>
+
+<h2>Поиск методов и наследование</h2>
+<p>При вызове метода Perl ищет его сначала в классе объекта, затем у родителей:</p>
+<pre><code class="language-perl">
+my $number = $joel->number;
+</code></pre>
+
+<h2>Чистота пространств имён</h2>
+<p>Модуль <strong>namespace::autoclean</strong> помогает избегать нежелательных коллизий между импортированными функциями и методами.</p>
+
+<p>Перл хранит родительские классы в массиве <code>@ISA</code>:</p>
+<pre><code class="language-perl">
+package InjuredPlayer {
+@InjuredPlayer::ISA = 'Player';
+}
+</code></pre>
+<p>Чище использовать pragma <code>parent</code>:</p>
+<pre><code class="language-perl">
+package InjuredPlayer {
+use parent 'Player';
+}
+</code></pre>
+
+<p>Перл поддерживает множественное наследование:</p>
+<pre><code class="language-perl">
+package InjuredPlayer; {
+use parent qw( Player Hospital::Patient );
+}
+</code></pre>
+
+<h2>AUTOLOAD</h2>
+<p>Если метод не найден, Perl ищет функцию <code>AUTOLOAD()</code> в классах по порядку разрешения методов. При множественном наследовании это усложняет понимание кода.</p>
+
+<h2>Переопределение методов и SUPER</h2>
+<p>В Perl можно переопределить метод родительского класса, объявив одноимённый метод в потомке:</p>
+<pre><code class="language-perl">
+sub overridden {
+my $self = shift;
+warn 'Called overridden() in child!';
+return $self->SUPER::overridden( @_ );
+}
+</code></pre>
+<p><code>SUPER::</code> указывает Perl искать метод у родителя. Будьте осторожны: <strong>SUPER::</strong> может неправильно работать при импорте методов из других пакетов. Модуль <strong>SUPER</strong> на CPAN решает эту проблему.</p>
+<p><strong>Moose</strong> использует свой <code>super()</code>, который лишён этих недостатков.</p>
+<h2>Стратегии работы с благословленными ссылками</h2>
+<p>Благословленные ссылки могут казаться одновременно минималистичными и запутанными. Moose делает работу с объектами проще. Но если приходится работать с кодом на чистом Perl, вот несколько рекомендаций:</p>
+<ul>
+    <li>Не смешивайте функции и методы в одном классе.</li>
+    <li>Для каждого класса используйте отдельный .pm-файл.</li>
+    <li>Соблюдайте стандартные соглашения: конструктор <code>new()</code>, имя переменной <code>$self</code> и т.д.</li>
+    <li>Используйте аксессоры повсеместно (например, через <code>Class::Accessor</code>).</li>
+    <li>Избегайте <code>AUTOLOAD()</code>, а если используете — объявляйте функции заранее.</li>
+    <li>Пишите классы так, чтобы их было легко расширить или делегировать.</li>
+    <li>Используйте вспомогательные модули вроде <code>Role::Tiny</code> для переиспользования кода.</li>
+</ul>
+
+<h2>Рефлексия</h2>
+<p>Рефлексия (инспекция) — это возможность программы анализировать саму себя во время выполнения. Moose через <code>Class::MOP</code> значительно упрощает задачи рефлексии.</p>
+
+<h3>Проверка загрузки модуля</h3>
+<p>Чтобы проверить, загружен ли модуль, смотрим в хэш <code>%INC</code>:</p>
+<pre><code class="language-perl">
+sub module_loaded {
+(my $modname = shift) =~ s!::!/!g;
+return exists $INC{ $modname . '.pm' };
+}
+</code></pre>
+
+<p>Или используйте <code>is_class_loaded()</code> из модуля <code>Class::Load</code>.</p>
+
+<h3>Проверка существования пакета</h3>
+<p>Пакет существует, если можно вызвать <code>can()</code> у него:</p>
+<pre><code class="language-perl">
+say "$pkg существует" if eval { $pkg->can('can') };
+</code></pre>
+
+<h3>Проверка версии модуля</h3>
+<p>Почти все модули наследуют метод <code>VERSION()</code> из <code>UNIVERSAL</code>:</p>
+<pre><code class="language-perl">
+my $version = $module->VERSION;
+</code></pre>
+
+<h3>Проверка существования функции</h3>
+<p>Проверяем через <code>can()</code>:</p>
+<pre><code class="language-perl">
+say "$func() существует" if $pkg->can($func);
+</code></pre>
+
+<p>Если есть сомнения, оберните вызов в <code>eval</code>. Осторожно с функциями через <code>AUTOLOAD()</code> — они могут давать неправильные результаты.</p>
+
+<h3>Проверка существования метода</h3>
+<p>Чёткой разницы между функцией и методом Perl не делает, но <code>can()</code> — лучший способ.</p>
+
+<h3>Работа с таблицами символов</h3>
+<p>Таблицы символов в Perl — это хэши, содержащие все глобальные переменные пакета. Например:</p>
+<pre><code class="language-perl">
+%MonkeyGrinder::
+</code></pre>
+
+<p>Модуль <code>Package::Stash</code> упрощает безопасную работу с таблицами символов.</p>
+
+<h2>Продвинутое ООП в Perl</h2>
+
+<h3>Предпочитайте композицию наследованию</h3>
+<p>Новички в проектировании ООП часто чрезмерно используют наследование для повторного использования кода и для использования полиморфизма. В результате получается глубокая иерархия классов с разбросанными повсюду обязанностями. Поддерживать такой код сложно — кто знает, где нужно добавить или изменить поведение? Что произойдет, если код в одном месте конфликтует с кодом, объявленным в другом месте?
+
+    Наследование — это всего лишь один из многих инструментов для программистов ООП. Это не всегда правильный инструмент. Это часто неправильный инструмент. Например, автомобиль (Car) может расширять Vehicle::Wheeled (отношение “is-a” — “является”), но лучше, если Car будет содержать несколько объектов Wheel в виде атрибутов экземпляра (отношение “has-a” — “имеет”).
+    
+    Разбиение сложных классов на более мелкие, сфокусированные сущности улучшает инкапсуляцию и снижает вероятность того, что какой-то один класс или роль будут делать слишком много. Меньшие, более простые и лучше инкапсулированные сущности легче понимать, тестировать и поддерживать.</p>
+
+<h3>Принцип единственной ответственности</h3>
+<p>Когда вы проектируете свою объектную систему, учитывайте обязанности каждой сущности. Например, объект Employee может представлять конкретную информацию о личных данных человека — его имени, контактной информации и другой личной информации, тогда как объект Job может представлять бизнес-обязанности. Разделение этих сущностей по их обязанностям позволяет классу Employee сосредоточиться только на управлении информацией о человеке, а классу Job — представлять, чем человек занимается. (Например, два Employee могут совместно выполнять одну Job, или один Employee может иметь одновременно должности CFO и COO.)
+
+    Когда каждый класс имеет только одну ответственность, вы уменьшаете связанность между классами и улучшаете инкапсуляцию данных и поведения, специфичных для класса.</p>
+
+<h3>Принцип DRY (Don't Repeat Yourself)</h3>
+<p>Сложность и дублирование усложняют разработку и сопровождение. Принцип DRY (Don’t Repeat Yourself — “Не повторяй себя”) напоминает о необходимости искать и устранять дублирование в системе. Дублирование существует как в данных, так и в коде. Вместо повторения конфигурационной информации, пользовательских данных и других важных артефактов вашей системы создавайте одну единственную каноническую репрезентацию этой информации, из которой можно будет генерировать другие представления.
+
+    Этот принцип помогает вам найти оптимальное представление вашей системы и данных и снижает вероятность расхождения дублированной информации.</p>
+
+<h3>Принцип подстановки Лисков</h3>
+<p>Принцип подстановки Лисков гласит, что вы должны иметь возможность заменить специализацию класса или роли на оригинал без нарушения API оригинала. Иными словами, объект должен быть таким же общим в ожиданиях и как минимум столь же специфичным в выдаче результатов, как объект, который он заменяет.
+
+    Представьте два класса: Dessert и его дочерний класс PecanPie. Если классы следуют принципу подстановки Лисков, вы можете заменить каждый объект Dessert объектом PecanPie в тестах, и всё должно успешно работать. См. статью Рэга Брейтуэйта “IS-STRICTLY-EQUIVALENT-TO-A” для получения дополнительных подробностей.</p>
+
+<h3>Подтипы и преобразования</h3>
+<p>Moose позволяет объявлять и использовать типы, а также расширять их через подтипы для всё более специализированного описания того, что представляют ваши данные и как они себя ведут. Эти аннотации типов помогают проверять правильность параметров функций и методов — или автоматически приводить их к правильным типам.
+
+    Например, вы можете захотеть позволить пользователям указывать дату для записи в Ledger в виде строки, а внутри представлять её как экземпляр DateTime. Это можно сделать, создав тип Date и добавив преобразование из строки. См. Moose::Util::TypeConstraints и MooseX::Types для получения дополнительных сведений.</p>
+
+<h3>Иммутабельность объектов</h3>
+<p>При хорошо спроектированном объекте вы говорите ему, что делать, а не как это делать. Если вы обнаруживаете, что обращаетесь к данным экземпляра объекта (даже через аксессоры) вне самого объекта, это значит, что у вас слишком много доступа к внутренностям объекта.
+
+    Новички в ООП часто воспринимают объекты как наборы записей, использующих методы для получения и установки внутренних значений. Эта простая техника ведет к соблазну размыть обязанности объекта по всей системе.
+    
+    Вы можете предотвратить неправильный доступ, сделав свои объекты иммутабельными. Передавайте все необходимые данные через конструктор, затем запрещайте любые изменения этой информации извне класса. Не предоставляйте методов для изменения внутренних данных — сделайте все публичные аксессоры только для чтения и используйте внутренние writers крайне осторожно. После создания такого объекта вы будете уверены, что он всегда находится в валидном состоянии. Его данные нельзя будет изменить так, чтобы привести его в некорректное состояние.
+    
+    Это требует огромной дисциплины, но в результате создаются надёжные, тестируемые и поддерживаемые системы. Некоторые проекты заходят так далеко, что запрещают даже изменение данных экземпляра внутри самого класса.</p>
+<p>Итог — надёжные, тестируемые и легко поддерживаемые системы.</p>
+        </div>
+        <div class="navigation">
+            <a href="chapter6.html">← Предыдущая глава</a>
+            <a href="../index.html">К оглавлению</a>
+            <a href="chapter8.html">Следующая глава →</a>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-perl.min.js"></script>
+</body>
+</html>
